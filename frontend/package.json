@@ -73,5 +73,10 @@
     "esbuild": "^0.25.0",
     "serialize-javascript": "^7.0.3",
     "tdesign-icons-vue-next": "0.4.4"
+  },
+  "allowScripts": {
+    "esbuild@0.25.6": true,
+    "@vue-office/pptx@1.0.1": true,
+    "vue-demi@0.14.10": true
   }
 }
