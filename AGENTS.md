@@ -126,7 +126,7 @@ $ld = "-s -w -H windowsgui " +
       "-X github.com/Tencent/WeKnora/internal/handler.CommitID=$(git rev-parse --short HEAD) " +
       "-X github.com/Tencent/WeKnora/internal/handler.BuildTime=2026-11-11T10-00-00Z " +
       "-X github.com/Tencent/WeKnora/internal/handler.GoVersion=go1.27.3"
-go build -tags "desktop sqlite_fts5" -trimpath -ldflags "$ld" -o "WeKnora Lite.exe" .
+go build -tags "desktop sqlite_fts5 production" -trimpath -ldflags "$ld" -o "WeKnora Lite.exe" .
 
 # 3) 部署（先停掉运行中的实例，否则文件被占用）
 Stop-Process -Name "WeKnora Lite" -Force -ErrorAction SilentlyContinue
@@ -141,7 +141,11 @@ Copy-Item "d:\软件项目\Weknora\web" -Destination "D:\DevEnv\WeKnora Lite\web
 - `Edition=lite` **必须**通过 ldflags 注入，否则内嵌 SPA 与 auto-setup 的行为会退化；`cmd/desktop/main.go` 里也有 `ensureDesktopLiteEdition()` 兜底。
 - `-H windowsgui` 决定是否带黑色控制台窗口；不加则会出现控制台。
 - `-s -w` 把产物从约 453 MB 压到约 262 MB。
-- 构建标签必须是 `desktop sqlite_fts5`：`desktop` 由 `wails.json` 提供（启用本机沙箱），`sqlite_fts5` 启用 SQLite 全文检索。
+- 构建标签必须是 `desktop sqlite_fts5 production`，三者缺一不可：
+  - `desktop`（`wails.json` 中声明）：启用本机沙箱。
+  - `sqlite_fts5`：启用 SQLite 全文检索。
+  - `production`：**必需**。缺少时程序能编译、后端也会监听端口，但 `wails.Run()` 会弹出错误框
+    `Wails applications will not build without the correct build tags`，界面完全无法加载。这个症状容易被误判为"启动成功"（端口通、有窗口句柄），验收时必须看窗口标题是否为 `WeKnora Lite`、并用 PrintWindow 或肉眼确认界面已渲染。
 - 产物不要提交进仓库（构建后删除），部署副本放在 `D:\DevEnv\WeKnora Lite\`。
 - `frontend/package.json` 中的 `allowScripts` 段是本机 npm 11 的脚本白名单（`esbuild`、`@vue-office/pptx`、`vue-demi`），属于构建必需配置，不要删除。
 
@@ -155,7 +159,9 @@ Copy-Item "d:\软件项目\Weknora\web" -Destination "D:\DevEnv\WeKnora Lite\web
 
 ### 验收与排障
 
-- 正常标志：进程存活、`Get-NetTCPConnection -OwningProcess <PID> -State Listen` 有回环端口、`http://127.0.0.1:<port>/` 返回 200、`/api/v1/*` 返回 401（未带桌面 token，属预期）、`MainWindowHandle` 非 0。
+- 正常标志：进程存活、`Get-NetTCPConnection -OwningProcess <PID> -State Listen` 有回环端口、`http://127.0.0.1:<port>/` 返回 200、`/api/v1/*` 返回 401（未带桌面 token，属预期）、**窗口标题为 `WeKnora Lite`**。
+- `MainWindowHandle` 非 0 **不能**作为验证标准：构建标签缺失时弹出的是错误对话框，同样有窗口句柄，且此时后端仍在运行、端口仍然连通。要确认界面真的渲染，用 `PrintWindow(hWnd, hdc, 2)` 截图查看，或直接看窗口内容。
+- 同一时间只保留一个实例；重复启动会起多个进程并各占一个随机端口。
 - GUI 程序没有控制台，闪退时用重定向抓错误：
   ```powershell
   Start-Process "D:\DevEnv\WeKnora Lite\WeKnora Lite.exe" `
