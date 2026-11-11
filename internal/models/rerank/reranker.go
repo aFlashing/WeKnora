@@ -122,8 +122,10 @@ type RerankerConfig struct {
 	ExtraConfig map[string]string
 	// CustomHeaders 允许在调用远程 API 时附加自定义 HTTP 请求头（类似 OpenAI Python SDK 的 extra_headers）。
 	CustomHeaders map[string]string
-	AppID         string
-	AppSecret     string // 加密值，工厂函数调用方传入，使用前已解密
+	// RPM caps outbound requests per rolling minute; 0 means unlimited.
+	RPM       int
+	AppID     string
+	AppSecret string // 加密值，工厂函数调用方传入，使用前已解密
 }
 
 // ConfigFromModel 根据 types.Model 构造 RerankerConfig。
@@ -143,6 +145,7 @@ func ConfigFromModel(m *types.Model, appID, appSecret string) *RerankerConfig {
 		Spec:          m.Parameters.Spec,
 		ExtraConfig:   m.Parameters.ExtraConfig,
 		CustomHeaders: m.Parameters.CustomHeaders,
+		RPM:           m.Parameters.RPM,
 		AppID:         appID,
 		AppSecret:     appSecret,
 	}
@@ -189,6 +192,7 @@ func newReranker(config *RerankerConfig) (Reranker, error) {
 		Credentials: api.Credentials{APIKey: config.APIKey, AppID: config.AppID, AppSecret: config.AppSecret},
 		Headers:     config.CustomHeaders,
 		Extra:       config.ExtraConfig,
+		RPM:         config.RPM,
 		Client:      newRerankHTTPClient(time.Duration(resolved.Rerank.RequestTimeout) * time.Second),
 	})
 	if err != nil {

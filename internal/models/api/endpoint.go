@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Tencent/WeKnora/internal/logger"
+	"github.com/Tencent/WeKnora/internal/models/limiter"
 	"github.com/Tencent/WeKnora/internal/types"
 	secutils "github.com/Tencent/WeKnora/internal/utils"
 )
@@ -61,6 +62,11 @@ type Endpoint struct {
 	// the protocol's own reserved headers.
 	Auth    AuthFunc
 	Headers map[string]string
+	// RPM caps outbound requests per rolling minute for this model; 0 means
+	// unlimited. Unlike the concurrency governor it applies to every call,
+	// interactive or background, because providers bill both against the same
+	// per-minute quota and answer 429 once it is exceeded.
+	RPM int
 	// Client is the HTTP client; nil uses the shared SSRF-safe client.
 	Client *http.Client
 }
@@ -116,6 +122,9 @@ func (e Endpoint) NewRequest(ctx context.Context, url string, body any, stream b
 
 // newPost prepares an authenticated POST of an already-encoded body.
 func (e Endpoint) newPost(ctx context.Context, url string, data []byte, contentType string) (*http.Request, error) {
+	// Throttle before building the request so a queued call holds no
+	// connection and the wait shows up in logs attributed to the model.
+	limiter.GateRPM(ctx, e.ModelID, e.RPM)
 	if err := secutils.ValidateURLForSSRF(url); err != nil {
 		return nil, fmt.Errorf("endpoint SSRF check failed: %w", err)
 	}

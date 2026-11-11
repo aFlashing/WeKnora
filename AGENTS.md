@@ -179,6 +179,28 @@ Copy-Item "d:\软件项目\Weknora\web" -Destination "D:\DevEnv\WeKnora Lite\web
 - 修改前端或 Go 代码后**必须重新构建并同步 `web/`**，否则界面仍是旧产物；只改前端也应重跑第 1、3 步（`web/` 是外部目录，非 embed）。
 - `git sync` 拉到上游对 `cmd/desktop` 或 `frontend` 的改动后，需要完整重跑构建流程；若上游修复了 Wails/Go 版本兼容问题，可再尝试 `wails build`。
 
+## 本地已实现的二次开发功能
+
+### 模型级 RPM（每分钟请求数）限制
+
+上游只提供 `max_concurrency`（并发的**请求数**，且仅约束后台任务）。本地新增了 `rpm` 字段，约束**请求速率**，用于适配有每分钟配额的服务商（超出通常返回 429）。
+
+| 项 | 说明 |
+| --- | --- |
+| 配置字段 | `model.parameters.rpm`（`int`，0/缺省 = 不限制） |
+| UI 入口 | 模型编辑对话框「每分钟请求上限（RPM）」，位于「后台并发上限」下方，对所有模型类型显示 |
+| 限流实现 | `internal/models/limiter/rpm.go`，进程内滑动窗口：记录最近一分钟内的请求时间戳，满额后调用方**阻塞排队**而非报错 |
+| 拦截位置 | `internal/models/api/endpoint.go` 的 `newPost`，即所有协议客户端（chat/embedding/vllm/rerank/asr）构造请求前的统一入口 |
+| 生效范围 | 前台对话 + 后台任务**都限流**（与 `max_concurrency` 的关键区别：后者只限后台并发） |
+| 失败策略 | fail-open：ctx 取消或限流器异常时放行，绝不让请求永久卡住 |
+| 配置传递链 | `types.ModelParameters.RPM` → 各 `ConfigFromModel` → 各 `Config.RPM` → `runtime.Connection.RPM` → `api.Endpoint.RPM` |
+
+注意事项：
+
+- 计数在进程内，重启应用后清零；桌面版是单进程，无需分布式实现。若将来跑多实例，需要换成 Redis 后端（可复用 `limiter` 包已有的 Redis 思路）。
+- 新增模型类型时，若它走 `api.Endpoint`，RPM 自动生效；若绕过 Endpoint 直接发 HTTP，需要自行调用 `limiter.GateRPM(ctx, modelID, rpm)`。
+- 单元测试：`go test ./internal/models/limiter/ -run RPM`。
+
 ## 二次开发约定
 
 - 新增依赖或修改构建配置时，同步更新对应的锁文件（`go.mod`/`go.sum`、前端 `package.json` 锁文件），避免与上游合并时产生大规模冲突。

@@ -76,6 +76,8 @@ export interface ModelConfig {
     // 后台任务（入库/富化）对该模型的并发上限，按模型 ID 全副本共享。
     // 0 或不填表示沿用全局默认（model.max_concurrency）；仅对 chat/embedding/vllm 生效。
     max_concurrency?: number;
+    // 每分钟最多请求数（RPM）。0 或不填表示不限制；同时约束前台对话与后台任务。
+    rpm?: number;
     app_id?: string;
     // Secret fields (api_key, app_secret) are never returned by the server in
     // this shape — they live behind the /credentials subresource. They are

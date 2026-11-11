@@ -76,6 +76,7 @@ func newASR(config *Config) (ASR, error) {
 		Credentials: api.Credentials{APIKey: config.APIKey},
 		Headers:     config.CustomHeaders,
 		Extra:       config.ExtraConfig,
+		RPM:         config.RPM,
 		Client:      newASRHTTPClient(time.Duration(resolved.Transcriptions.RequestTimeout) * time.Second),
 	})
 	if err != nil {

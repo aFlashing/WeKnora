@@ -49,6 +49,7 @@ func newRemoteEmbedder(config Config, pooler EmbedderPooler) (Embedder, error) {
 		Credentials: api.Credentials{APIKey: config.APIKey, AppID: config.AppID, AppSecret: config.AppSecret},
 		Headers:     config.CustomHeaders,
 		Extra:       config.ExtraConfig,
+		RPM:         config.RPM,
 		Client:      newEmbeddingHTTPClient(time.Duration(resolved.Embeddings.RequestTimeout) * time.Second),
 	})
 	if err != nil {

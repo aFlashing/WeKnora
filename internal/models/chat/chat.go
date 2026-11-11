@@ -84,6 +84,8 @@ type ChatConfig struct {
 	// MaxConcurrency caps concurrent background calls to this model; 0 falls
 	// back to the process-wide default (see limiter.GateN).
 	MaxConcurrency int
+	// RPM caps outbound requests per rolling minute; 0 means unlimited.
+	RPM int
 	ExtraConfig    map[string]string
 	// CustomHeaders 允许在调用远程 API 时附加自定义 HTTP 请求头（类似 OpenAI Python SDK 的 extra_headers）。
 	CustomHeaders map[string]string
@@ -109,6 +111,7 @@ func ConfigFromModel(m *types.Model, appID, appSecret string) *ChatConfig {
 		Source:         m.Source,
 		Provider:       m.Parameters.Provider,
 		MaxConcurrency: m.Parameters.MaxConcurrency,
+		RPM:            m.Parameters.RPM,
 		ExtraConfig:    m.Parameters.ExtraConfig,
 		CustomHeaders:  m.Parameters.CustomHeaders,
 		AppID:          appID,
@@ -184,6 +187,7 @@ func NewRemoteChat(config *ChatConfig) (Chat, error) {
 		Credentials: api.Credentials{APIKey: config.APIKey, AppID: config.AppID, AppSecret: config.AppSecret},
 		Headers:     config.CustomHeaders,
 		Extra:       config.ExtraConfig,
+		RPM:         config.RPM,
 	})
 	if err != nil {
 		return nil, err

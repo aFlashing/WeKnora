@@ -151,6 +151,12 @@ type ModelParameters struct {
 	// process-wide model.max_concurrency". Interactive user-facing calls are
 	// never gated. Only chat / vlm / embedding honour this (see limiter.Gate).
 	MaxConcurrency int `yaml:"max_concurrency,omitempty" json:"max_concurrency,omitempty"`
+	// RPM caps outbound requests per rolling minute for THIS model; 0 means
+	// unlimited. Unlike MaxConcurrency it applies to every call, interactive
+	// or background, because providers such as OpenAI-compatible gateways
+	// count both against the same per-minute quota and answer HTTP 429 once it
+	// is exceeded. The client layer waits for a free slot instead of failing.
+	RPM int `yaml:"rpm,omitempty" json:"rpm,omitempty"`
 	// WeKnoraCloud 厂商专用凭证
 	AppID     string `yaml:"app_id,omitempty"     json:"app_id,omitempty"`
 	AppSecret string `yaml:"app_secret,omitempty" json:"app_secret,omitempty"` // AES-256 加密存储，实际承载上游 API Key

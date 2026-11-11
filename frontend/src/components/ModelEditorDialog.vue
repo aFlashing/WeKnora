@@ -549,6 +549,18 @@
         </div>
 
         <!--
+          每分钟请求数上限。与并发上限不同，它约束的是请求速率而不是同时进行的
+          请求数；上游按分钟计费的配额被所有调用（前台对话 + 后台解析）共享，
+          所以这里对所有模型类型都生效，0 = 不限制。
+        -->
+        <div class="form-item">
+          <label class="form-label">{{ $t('model.editor.rpmLabel') }}</label>
+          <t-input v-model.number="formData.rpm" type="number" :min="0" :max="1000000"
+            :placeholder="$t('model.editor.rpmPlaceholder')" />
+          <p class="form-desc">{{ $t('model.editor.rpmDesc') }}</p>
+        </div>
+
+        <!--
           高级：协议覆盖 / 远端模型名 / 目录 compat 覆盖，以及仅旧数据才显示的
           thinking_control 兼容选择。默认折叠，绝大多数用户无需触碰。
         -->
@@ -682,6 +694,8 @@ interface ModelFormData {
   contextWindow?: number
   /** 后台任务对该模型的并发上限；0/undefined 表示沿用全局默认。仅 chat/embedding/vllm 生效。 */
   maxConcurrency?: number
+  /** 该模型每分钟最多请求数（RPM）；0/undefined 表示不限制。对所有模型类型生效。 */
+  rpm?: number
   /** 对话/VLM 单次输出上限（token）。空/0 表示使用目录默认。 */
   maxOutputTokens?: number
   /**
@@ -1328,6 +1342,7 @@ const formData = ref<ModelFormData>({
   supportsVision: false,
   contextWindow: undefined,
   maxConcurrency: undefined,
+  rpm: undefined,
   maxOutputTokens: undefined,
   thinkingControl: '',
   extraConfig: {},
@@ -1613,6 +1628,7 @@ const resetForm = () => {
     supportsVision: false,
     contextWindow: undefined,
     maxConcurrency: undefined,
+    rpm: undefined,
     maxOutputTokens: undefined,
     thinkingControl: '',
     extraConfig: {},

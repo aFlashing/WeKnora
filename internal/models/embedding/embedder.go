@@ -106,7 +106,9 @@ type Config struct {
 	// MaxConcurrency caps concurrent background calls to this model; 0 falls
 	// back to the process-wide default (see limiter.GateN).
 	MaxConcurrency int                      `json:"max_concurrency"`
-	Spec           *types.ModelSpecOverride `json:"spec,omitempty"`
+	// RPM caps outbound requests per rolling minute; 0 means unlimited.
+	RPM  int                      `json:"rpm"`
+	Spec *types.ModelSpecOverride `json:"spec,omitempty"`
 	ExtraConfig    map[string]string        `json:"extra_config"`
 	// CustomHeaders 允许在调用远程 API 时附加自定义 HTTP 请求头（类似 OpenAI Python SDK 的 extra_headers）。
 	CustomHeaders map[string]string `json:"custom_headers"`
@@ -132,6 +134,7 @@ func ConfigFromModel(m *types.Model, appID, appSecret string) Config {
 		TruncatePromptTokens:      m.Parameters.EmbeddingParameters.TruncatePromptTokens,
 		Provider:                  m.Parameters.Provider,
 		MaxConcurrency:            m.Parameters.MaxConcurrency,
+		RPM:                       m.Parameters.RPM,
 		Spec:                      m.Parameters.Spec,
 		ExtraConfig:               m.Parameters.ExtraConfig,
 		CustomHeaders:             m.Parameters.CustomHeaders,

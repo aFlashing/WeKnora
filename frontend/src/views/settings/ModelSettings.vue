@@ -426,6 +426,7 @@ function convertToLegacyFormat(model: ModelConfig) {
     supportsVision: model.parameters.supports_vision || false,
     contextWindow: model.parameters.context_window || undefined,
     maxConcurrency: model.parameters.max_concurrency,
+    rpm: model.parameters.rpm || undefined,
     maxOutputTokens: model.parameters.max_output_tokens || undefined,
     customHeaders: model.parameters.custom_headers
       ? Object.entries(model.parameters.custom_headers).map(([key, value]) => ({ key, value: String(value) }))
@@ -755,6 +756,10 @@ const handleModelSave = async (modelData: any) => {
         ...(['chat', 'embedding', 'vllm'].includes(saveType)
           && Number(modelData.maxConcurrency) > 0
           ? { max_concurrency: Number(modelData.maxConcurrency) }
+          : {}),
+        // 每分钟请求数上限：对所有模型类型生效（上游配额由前台与后台共享），>0 才写入。
+        ...(Number(modelData.rpm) > 0
+          ? { rpm: Math.round(Number(modelData.rpm)) }
           : {})
       }
     }

@@ -57,6 +57,8 @@ type Config struct {
 	// MaxConcurrency caps concurrent background calls to this model; 0 falls
 	// back to the process-wide default (see limiter.GateN).
 	MaxConcurrency int
+	// RPM caps outbound requests per rolling minute; 0 means unlimited.
+	RPM int
 	// Spec carries per-row catalog overrides (protocol, compat, levels). VLM
 	// calls now go through the chat factory, so the override has to travel
 	// with them — otherwise /models reports capabilities computed WITH the
@@ -94,6 +96,7 @@ func ConfigFromModel(m *types.Model, appID, appSecret string) *Config {
 		InterfaceType:  ifType,
 		Provider:       m.Parameters.Provider,
 		MaxConcurrency: m.Parameters.MaxConcurrency,
+		RPM:            m.Parameters.RPM,
 		Spec:           m.Parameters.Spec,
 		Extra:          stringMapToAnyMap(m.Parameters.ExtraConfig),
 		CustomHeaders:  m.Parameters.CustomHeaders,

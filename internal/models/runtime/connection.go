@@ -17,7 +17,9 @@ type Connection struct {
 	Credentials api.Credentials
 	Headers     map[string]string
 	Extra       map[string]string
-	Client      *http.Client
+	// RPM is this model's per-minute request cap; 0 means unlimited.
+	RPM    int
+	Client *http.Client
 }
 
 // Endpoint assembles authentication, headers and vendor endpoint routing for
@@ -54,6 +56,7 @@ func (r *Resolved) Endpoint(kind types.ModelType, c Connection) (api.Endpoint, e
 	ep := api.Endpoint{
 		BaseURL: r.BaseURL, Model: r.RemoteModel, ModelID: c.ModelID,
 		Auth: v.AuthFunc(protocol, creds), Headers: headers, Client: c.Client,
+		RPM: c.RPM,
 	}
 	if v.Endpoint != nil {
 		req := providers.EndpointRequest{
