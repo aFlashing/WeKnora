@@ -147,7 +147,7 @@ Copy-Item "d:\软件项目\Weknora\web" -Destination "D:\DevEnv\WeKnora Lite\web
 
 ### 运行时配置与坑
 
-- **`JIEBA_DICT_DIR` 必须写成用户环境变量**（已设为 `D:\DevEnv\WeKnoraLiteData\jieba-dict`）。`types.Jieba` 是包级变量，在 `main()` 之前初始化，此时 `.env` 尚未加载；只写进 `.env` 会启动即 panic：`Dictionary file does not exist: .../jieba.dict.utf8`。
+- **中文分词字典有两处保障**：① 用户环境变量 `JIEBA_DICT_DIR=D:\DevEnv\WeKnoraLiteData\jieba-dict`；② 部署目录内的兜底相对路径 `D:\DevEnv\WeKnora Lite\github.com\yanyiwu\gojieba@v1.4.7\deps\cppjieba\dict\*.utf8`（gojieba 默认按编译期相对路径查找）。`types.Jieba` 是包级变量，在 `main()` 之前初始化，此时 `.env` 尚未加载，因此**写进 `.env` 无效**，只会启动即 panic：`Dictionary file does not exist: .../jieba.dict.utf8`。重建部署目录时这两处都要保留。
 - **`DUCKDB_SKIP_EXTENSION_LOAD=1` 已写入 `.env`**。首次启动会从 `extensions.duckdb.org` 下载 `spatial`/`excel` 扩展，网络受限时会长时间卡住且无窗口。代价是 Excel 数据分析不可用；需要时注释掉该行并在可联网环境下等待首次下载完成（扩展会被缓存）。
 - `DB_PATH`、`LOCAL_STORAGE_BASE_DIR` 必须用绝对路径，否则按 exe 所在目录解析，可能写进 C 盘用户目录。
 - 桌面版免登录：启动时生成一次性 token，首次自动创建 `admin@weknora.local`。
