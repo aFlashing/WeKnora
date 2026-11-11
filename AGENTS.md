@@ -97,6 +97,13 @@ git push                  # 推送到 origin 的当前分支
 | Go 代理 | `GOPROXY=https://goproxy.cn,direct`（官方源在国内超时） |
 | npm 镜像 | `registry=https://registry.npmmirror.com`，`replace-registry-host=npmjs`（保持 `cdn.sheetjs.com` 原样，否则 `xlsx` 报 422） |
 
+环境变量已固化，新开终端即可使用，**无需重复安装**：
+
+- 系统 PATH 已包含：`D:\Program Files\Go\bin`、`D:\DevEnv\nodejs`、`D:\DevEnv\winlibs\mingw64\bin`、`D:\DevEnv\GoPath\bin`、`D:\DevEnv\npm-global`、`D:\Program Files\Git\cmd`。
+- 用户变量 `GOPATH=D:\DevEnv\GoPath`；`GOBIN`/`GOMODCACHE`/`GOPROXY` 写在 `%AppData%\go\env`（由 `go env -w` 维护）。
+- npm 的 `prefix`/`cache`/`registry` 写在 `%UserProfile%\.npmrc`。
+- 改动环境变量后必须重启终端或 IDE，旧进程不会重新读取。
+
 ### 构建流程
 
 **不要用 `wails build`。** Go 1.27 与 Wails 2.12 内置的 `go/packages` 不兼容，会报
