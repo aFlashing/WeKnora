@@ -191,6 +191,7 @@ Copy-Item "$dst\third_party\anydoc-go\lib\windows_amd64\libanydoc_go.a" "D:\DevE
 
 ### 运行时配置与坑
 
+- **上传大小上限改成 10 GB，需要两处同时改**：① 部署目录 `.env` 的 `MAX_FILE_SIZE_MB=10240`（后端 `utils.GetMaxFileSizeMB()` 读它，控制 `limitUploadBody` 与各 handler 的 413 判定）；② `frontend/public/config.js` 的 `MAX_FILE_SIZE_MB: 10240`（桌面端没有 nginx，前端 `utils/index.ts` 只认 `window.__RUNTIME_CONFIG__`，落回默认 50 就会在选文件时被拦）。Docker 部署不受影响：`docker-entrypoint.sh` 会用容器环境变量重写 `config.js`，默认仍是 50。注意解析阶段会把整份文档读进内存（`io.ReadAll`），单文件建议仍控制在 1 GB 以内。
 - **中文分词字典有两处保障**：① 用户环境变量 `JIEBA_DICT_DIR=D:\DevEnv\WeKnoraLiteData\jieba-dict`；② 部署目录内的兜底相对路径 `D:\DevEnv\WeKnora Lite\github.com\yanyiwu\gojieba@v1.4.7\deps\cppjieba\dict\*.utf8`（gojieba 默认按编译期相对路径查找）。`types.Jieba` 是包级变量，在 `main()` 之前初始化，此时 `.env` 尚未加载，因此**写进 `.env` 无效**，只会启动即 panic：`Dictionary file does not exist: .../jieba.dict.utf8`。重建部署目录时这两处都要保留。
 - **`DUCKDB_SKIP_EXTENSION_LOAD=1` 已写入 `.env`**。首次启动会从 `extensions.duckdb.org` 下载 `spatial`/`excel` 扩展，网络受限时会长时间卡住且无窗口。代价是 Excel 数据分析不可用；需要时注释掉该行并在可联网环境下等待首次下载完成（扩展会被缓存）。
 - `DB_PATH`、`LOCAL_STORAGE_BASE_DIR` 必须用绝对路径，否则按 exe 所在目录解析，可能写进 C 盘用户目录。
