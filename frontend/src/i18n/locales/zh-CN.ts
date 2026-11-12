@@ -2700,6 +2700,10 @@ export default {
           name: 'anydoc',
           desc: '进程内 Office 文档解析（无需外部服务）'
         },
+        chm: {
+          name: 'CHM (Calibre)',
+          desc: 'CHM 帮助文档由 Calibre 解包为 EPUB 后进程内解析（需安装 Calibre）'
+        },
         builtin: {
           name: '内置',
           desc: 'DocReader 内置解析引擎（docx/pdf/xlsx 等复杂格式）'
@@ -8053,6 +8057,9 @@ export default {
       parseMethodHint: '自动模式会为扫描件启用 OCR，电子版 PDF 直接提取文本。',
       sealRecognition: '印章识别',
       chartRecognition: '图表识别',
+      chmConvertPathLabel: 'Calibre ebook-convert 路径',
+      chmConvertPathPlaceholder: 'D:\\Program Files\\Calibre2\\ebook-convert.exe',
+      chmConvertPathHint: 'CHM 会先用 Calibre 解包为 EPUB，再交给进程内引擎解析。需先安装 Calibre；留空时读取环境变量 CHM_EBOOK_CONVERT_PATH。',
       language: '语言',
       testConnection: '测试连接',
       docs: '文档',

@@ -30,10 +30,12 @@ const (
 )
 
 func init() {
-	types.SetPreferParserEngine(preferAnydocWhenAvailable)
+	// preferLocalEngine adds the CHM route on top of the anydoc rule.
+	types.SetPreferParserEngine(preferLocalEngine)
 	RegisterEngine(&builtinEngine{})
 	RegisterEngine(&simpleEngine{})
 	RegisterEngine(&anydocEngine{})
+	RegisterEngine(&chmEngine{})
 	RegisterEngine(&weKnoraCloudEngine{})
 	RegisterEngine(&mineruEngine{})
 	RegisterEngine(&mineruCloudEngine{})

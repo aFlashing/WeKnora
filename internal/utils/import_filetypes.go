@@ -13,7 +13,7 @@ import (
 // this set by docparser's contract test to prevent advertised-but-rejected
 // formats (#4598).
 var supportedImportFileExtensions = map[string]struct{}{
-	"pdf": {}, "txt": {}, "docx": {}, "doc": {}, "epub": {},
+	"pdf": {}, "txt": {}, "docx": {}, "doc": {}, "epub": {}, "chm": {},
 	"docm": {}, "odt": {}, "rtf": {},
 	"html": {}, "htm": {}, "mhtml": {}, "md": {}, "markdown": {},
 	"xmind": {},

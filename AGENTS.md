@@ -91,6 +91,8 @@ git push                  # 推送到 origin 的当前分支
 | Node / npm | `D:\DevEnv\nodejs`（26.13.0 / 11.20.0） |
 | npm 全局目录 / 缓存 | `D:\DevEnv\npm-global` / `D:\DevEnv\npm-cache` |
 | GCC (CGO) | `D:\DevEnv\winlibs\mingw64\bin`（16.2.0） |
+| Rust（编译 anydoc 静态库） | `D:\DevEnv\rust`（`rustup`/`cargo` 子目录），工具链 `stable-x86_64-pc-windows-gnu`（1.99.1） |
+| anydoc 静态库（ASCII 副本） | `D:\DevEnv\anydoc-lib\libanydoc_go.a` |
 | Wails CLI | `D:\DevEnv\GoPath\bin\wails.exe`（v2.12.0） |
 | SQLite 头文件 | `D:\DevEnv\sqlite3\include\sqlite3.h` |
 | 中文分词字典 | `D:\DevEnv\WeKnoraLiteData\jieba-dict` |
@@ -102,6 +104,8 @@ git push                  # 推送到 origin 的当前分支
 - 系统 PATH 已包含：`D:\Program Files\Go\bin`、`D:\DevEnv\nodejs`、`D:\DevEnv\winlibs\mingw64\bin`、`D:\DevEnv\GoPath\bin`、`D:\DevEnv\npm-global`、`D:\Program Files\Git\cmd`。
 - 用户变量 `GOPATH=D:\DevEnv\GoPath`；`GOBIN`/`GOMODCACHE`/`GOPROXY` 写在 `%AppData%\go\env`（由 `go env -w` 维护）。
 - npm 的 `prefix`/`cache`/`registry` 写在 `%UserProfile%\.npmrc`。
+- 系统变量 `RUSTUP_HOME=D:\DevEnv\rust\rustup`、`CARGO_HOME=D:\DevEnv\rust\cargo`，PATH 追加 `D:\DevEnv\rust\cargo\bin`；cargo 镜像写在 `D:\DevEnv\rust\cargo\config.toml`（rsproxy）。
+- 系统变量 `CGO_LDFLAGS=-LD:/DevEnv/anydoc-lib -lntdll -luserenv -lbcrypt -ladvapi32 -lole32 -lshell32 -loleaut32 -lws2_32 -lwsock32`：链接 anydoc 静态库所需，**不能省**，否则 `-lanydoc_go` 找不到、或 Rust std 的 `NtReadFile`/`RtlNtStatusToDosError` 未定义。
 - 改动环境变量后必须重启终端或 IDE，旧进程不会重新读取。
 
 ### 构建流程
@@ -133,7 +137,7 @@ $ld = "-s -w -H windowsgui " +
       "-X github.com/Tencent/WeKnora/internal/handler.CommitID=$(git rev-parse --short HEAD) " +
       "-X github.com/Tencent/WeKnora/internal/handler.BuildTime=2026-11-11T10-00-00Z " +
       "-X github.com/Tencent/WeKnora/internal/handler.GoVersion=go1.27.3"
-go build -tags "desktop sqlite_fts5 production" -trimpath -ldflags "$ld" -o "WeKnora Lite.exe" .
+go build -tags "desktop sqlite_fts5 production anydoc" -trimpath -ldflags "$ld" -o "WeKnora Lite.exe" .
 
 # 3) 部署（先停掉运行中的实例，否则文件被占用）
 Stop-Process -Name "WeKnora Lite" -Force -ErrorAction SilentlyContinue
@@ -147,14 +151,43 @@ Copy-Item "d:\软件项目\Weknora\web" -Destination "D:\DevEnv\WeKnora Lite\web
 
 - `Edition=lite` **必须**通过 ldflags 注入，否则内嵌 SPA 与 auto-setup 的行为会退化；`cmd/desktop/main.go` 里也有 `ensureDesktopLiteEdition()` 兜底。
 - `-H windowsgui` 决定是否带黑色控制台窗口；不加则会出现控制台。
-- `-s -w` 把产物从约 453 MB 压到约 262 MB。
-- 构建标签必须是 `desktop sqlite_fts5 production`，三者缺一不可：
+- `-s -w` 把产物从约 453 MB 压到约 262 MB（带 `anydoc` 时约 272 MB）。
+- 构建标签为 `desktop sqlite_fts5 production anydoc`，前三个缺一不可（`anydoc` 可去掉，见下文）：
   - `desktop`（`wails.json` 中声明）：启用本机沙箱。
   - `sqlite_fts5`：启用 SQLite 全文检索。
   - `production`：**必需**。缺少时程序能编译、后端也会监听端口，但 `wails.Run()` 会弹出错误框
     `Wails applications will not build without the correct build tags`，界面完全无法加载。这个症状容易被误判为"启动成功"（端口通、有窗口句柄），验收时必须看窗口标题是否为 `WeKnora Lite`、并用 PrintWindow 或肉眼确认界面已渲染。
 - 产物不要提交进仓库（构建后删除），部署副本放在 `D:\DevEnv\WeKnora Lite\`。
 - `frontend/package.json` 中的 `allowScripts` 段是本机 npm 11 的脚本白名单（`esbuild`、`@vue-office/pptx`、`vue-demi`），属于构建必需配置，不要删除。
+
+### anydoc 静态库（不入库，换机 / 重装后需重建）
+
+桌面端带 `anydoc` 标签后，docx/doc/odt/rtf/pptx/ppt/odp/xlsx/xls/ods/epub/csv/pdf 全部在进程内解析，不再依赖 docreader。它链接的是 Rust 静态库，体积约 23 MB，被 `third_party/anydoc-go/.gitignore` 的 `lib/` 规则忽略，**不会进仓库**。
+
+重建步骤（一次性，约 1 分钟）：
+
+```powershell
+# 1) 复制到纯 ASCII 路径：仓库路径含中文，MinGW 的 dlltool 会写不出文件
+$dst = "D:\DevEnv\anydoc-build"
+New-Item -ItemType Directory -Force "$dst\third_party","$dst\scripts" | Out-Null
+robocopy "d:\软件项目\Weknora\third_party\anydoc-go" "$dst\third_party\anydoc-go" /E /XD target lib .git
+Copy-Item "d:\软件项目\Weknora\scripts\build-anydoc-lib.sh" "$dst\scripts\" -Force
+
+# 2) 用 GNU 工具链编译（本机无 MSVC，脚本已支持 x86_64-pc-windows-gnu）
+$env:RUSTUP_HOME="D:\DevEnv\rust\rustup"; $env:CARGO_HOME="D:\DevEnv\rust\cargo"
+$env:Path="D:\DevEnv\rust\cargo\bin;D:\DevEnv\winlibs\mingw64\bin;"+$env:Path
+& "D:\Program Files\Git\bin\bash.exe" -c "cd '/d/DevEnv/anydoc-build' && TARGET=x86_64-pc-windows-gnu bash scripts/build-anydoc-lib.sh"
+
+# 3) 产物放到两处
+Copy-Item "$dst\third_party\anydoc-go\lib\windows_amd64\libanydoc_go.a" "d:\软件项目\Weknora\third_party\anydoc-go\lib\windows_amd64\" -Force
+Copy-Item "$dst\third_party\anydoc-go\lib\windows_amd64\libanydoc_go.a" "D:\DevEnv\anydoc-lib\" -Force
+```
+
+关键点：
+
+- 只要中文路径存在，就必须走 `CGO_LDFLAGS` 里的 `-LD:/DevEnv/anydoc-lib` 这条 ASCII 路径；`anydoc.go` 自带的 `-L${SRCDIR}` 会展开成中文路径，ld 按 ANSI 解释 UTF-8 参数，找不到库。
+- 验证链接态：`go test -tags anydoc ./internal/infrastructure/docparser/anydoc/ -run TestConvert`，14 种格式应全部 PASS。
+- 本机 Rust 是 GNU 工具链，**不要**按上游文档用 `x86_64-pc-windows-msvc`，MSVC 缺少 `link.exe` 会直接失败。
 
 ### 运行时配置与坑
 
@@ -200,6 +233,27 @@ Copy-Item "d:\软件项目\Weknora\web" -Destination "D:\DevEnv\WeKnora Lite\web
 - 计数在进程内，重启应用后清零；桌面版是单进程，无需分布式实现。若将来跑多实例，需要换成 Redis 后端（可复用 `limiter` 包已有的 Redis 思路）。
 - 新增模型类型时，若它走 `api.Endpoint`，RPM 自动生效；若绕过 Endpoint 直接发 HTTP，需要自行调用 `limiter.GateRPM(ctx, modelID, rpm)`。
 - 单元测试：`go test ./internal/models/limiter/ -run RPM`。
+
+### CHM 文档解析（Calibre + anydoc）
+
+上游没有 CHM 支持。本地新增引擎 `chm`：用 Calibre 的 `ebook-convert` 把 CHM（LZX 压缩的 HTML 容器）解包成 EPUB，再交给进程内 anydoc 解析，全程不依赖 docreader。
+
+| 项 | 说明 |
+| --- | --- |
+| 代码 | `internal/infrastructure/docparser/chm_reader.go`，`chm_exec_windows.go` / `chm_exec_other.go`（隐藏控制台窗口） |
+| 引擎名 | `chm`，只声明 `chm` 一种文件类型；`defaultParserEngine` 会把 chm 固定路由到它 |
+| 配置项 | 租户级 `chm_ebook_convert_path`（设置 → 解析引擎 → CHM），兜底环境变量 `CHM_EBOOK_CONVERT_PATH` |
+| 超时 | `WEKNORA_CHM_CONVERT_TIMEOUT`，默认 15 分钟；codesys.chm（5.3 MB / 1195 节）实测约 3 分钟 |
+| 临时目录 | 每次转换在系统临时目录建独立目录，`CALIBRE_CONFIG_DIRECTORY` 也指向其中，避免与运行中的 Calibre GUI 抢锁 |
+| 图片 | EPUB 内嵌图片由 anydoc 抽成 `ImageRef.ImageData`，正文保留 `images/image-N.ext` 相对引用 |
+| 验收 | `WEKNORA_TEST_EBOOK_CONVERT=<ebook-convert> WEKNORA_TEST_CHM_FILE=<x.chm> go test -tags anydoc ./internal/infrastructure/docparser/ -run TestCHMConversionWithCalibre -v` |
+
+注意：
+
+- 用户机器上必须装 Calibre；未配置路径时引擎在列表中显示为不可用并给出原因，不会静默失败。
+- 链路不含 OCR，CHM 内的纯图片页面不会产生文字。
+- 引用定位（SourceBlocks）为空：原文是 `.chm`，前端也没有 CHM 预览器，引用只能定位到文本，不能跳转原文。
+- 换机后除 anydoc 静态库外，还要重新安装 Calibre 并写入 `CHM_EBOOK_CONVERT_PATH`（部署目录的 `.env` 已配置）。
 
 ## 二次开发约定
 

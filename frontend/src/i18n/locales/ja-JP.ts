@@ -2400,6 +2400,9 @@ export default {
       parseMethodHint: '自動モードでは、スキャンされたPDFにはOCRを使用し、デジタルPDFからはネイティブのテキストレイヤを抽出します。',
       sealRecognition: '印影認識',
       chartRecognition: 'グラフ認識',
+      chmConvertPathLabel: 'Calibre ebook-convert のパス',
+      chmConvertPathPlaceholder: 'D:\\Program Files\\Calibre2\\ebook-convert.exe',
+      chmConvertPathHint: 'CHM はまず Calibre で EPUB に展開され、その後プロセス内エンジンで解析されます。Calibre のインストールが必要です。空欄の場合は環境変数 CHM_EBOOK_CONVERT_PATH を使用します。',
       language: '言語',
       testConnection: '接続テスト',
       docs: 'ドキュメント',
@@ -7263,6 +7266,10 @@ export default {
         anydoc: {
           name: 'anydoc',
           desc: 'プロセス内で動作するOfficeドキュメントの解析エンジン（外部サービス不要）'
+        },
+        chm: {
+          name: 'CHM (Calibre)',
+          desc: 'CHM ヘルプを Calibre で EPUB に展開し、プロセス内で解析します（Calibre が必要）'
         },
         mineru: {
           name: 'MinerU',

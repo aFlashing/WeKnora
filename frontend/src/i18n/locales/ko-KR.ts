@@ -2698,6 +2698,10 @@ export default {
           name: 'anydoc',
           desc: '프로세스 내 오피스 문서 파싱 (외부 서비스 불필요)'
         },
+        chm: {
+          name: 'CHM (Calibre)',
+          desc: 'CHM 도움말을 Calibre로 EPUB으로 변환한 뒤 프로세스 내에서 파싱합니다 (Calibre 필요)'
+        },
         builtin: {
           name: '내장',
           desc: 'DocReader 내장 파서 엔진 (docx/pdf/xlsx 등 복잡한 형식)'
@@ -8052,6 +8056,9 @@ export default {
       parseMethodHint: '자동 모드는 스캔 PDF에는 OCR을 사용하고 디지털 PDF에서는 원본 텍스트를 추출합니다.',
       sealRecognition: '인장 인식',
       chartRecognition: '차트 인식',
+      chmConvertPathLabel: 'Calibre ebook-convert 경로',
+      chmConvertPathPlaceholder: 'D:\\Program Files\\Calibre2\\ebook-convert.exe',
+      chmConvertPathHint: 'CHM은 먼저 Calibre로 EPUB으로 변환된 뒤 프로세스 내 엔진에서 파싱됩니다. Calibre를 먼저 설치해야 합니다. 비워 두면 CHM_EBOOK_CONVERT_PATH 환경 변수를 사용합니다.',
       language: '언어',
       testConnection: '연결 테스트',
       docs: '문서',

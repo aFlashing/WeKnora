@@ -698,6 +698,7 @@ const fileTypeOptions = computed(() => [
   { label: 'PPTX', value: 'pptx' },
   { label: 'PPT', value: 'ppt' },
   { label: 'EPUB', value: 'epub' },
+  { label: 'CHM', value: 'chm' },
   { label: 'MHTML', value: 'mhtml' },
   { label: 'TXT', value: 'txt' },
   { label: 'MD', value: 'md' },

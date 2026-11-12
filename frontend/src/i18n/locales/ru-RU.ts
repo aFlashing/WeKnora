@@ -2698,6 +2698,10 @@ export default {
           name: 'anydoc',
           desc: 'Разбор офисных документов внутри процесса (внешний сервис не требуется)'
         },
+        chm: {
+          name: 'CHM (Calibre)',
+          desc: 'Справка CHM распаковывается в EPUB с помощью Calibre и разбирается внутри процесса (требуется Calibre)'
+        },
         builtin: {
           name: 'Встроенный',
           desc: 'Встроенный парсер DocReader (docx/pdf/xlsx и другие сложные форматы)'
@@ -8052,6 +8056,9 @@ export default {
       parseMethodHint: 'Автоматический режим использует OCR для сканов и извлекает исходный текст из цифровых PDF.',
       sealRecognition: 'Распознавание печатей',
       chartRecognition: 'Распознавание диаграмм',
+      chmConvertPathLabel: 'Путь к Calibre ebook-convert',
+      chmConvertPathPlaceholder: 'D:\\Program Files\\Calibre2\\ebook-convert.exe',
+      chmConvertPathHint: 'Архив CHM сначала распаковывается в EPUB с помощью Calibre, затем разбирается встроенным движком. Требуется установленный Calibre; если поле пустое, используется переменная окружения CHM_EBOOK_CONVERT_PATH.',
       language: 'Язык',
       testConnection: 'Проверить с текущими параметрами',
       docs: 'Документация',

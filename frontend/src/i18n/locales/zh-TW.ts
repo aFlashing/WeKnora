@@ -2700,6 +2700,10 @@ export default {
           name: 'anydoc',
           desc: '行程內 Office 文件解析（無需外部服務）'
         },
+        chm: {
+          name: 'CHM (Calibre)',
+          desc: 'CHM 說明文件由 Calibre 解包為 EPUB 後於行程內解析（需安裝 Calibre）'
+        },
         builtin: {
           name: '內建',
           desc: 'DocReader 內建解析引擎（docx/pdf/xlsx 等複雜格式）'
@@ -8053,6 +8057,9 @@ export default {
       parseMethodHint: '自動模式會為掃描件啟用 OCR，電子版 PDF 直接提取文字。',
       sealRecognition: '印章識別',
       chartRecognition: '圖表識別',
+      chmConvertPathLabel: 'Calibre ebook-convert 路徑',
+      chmConvertPathPlaceholder: 'D:\\Program Files\\Calibre2\\ebook-convert.exe',
+      chmConvertPathHint: 'CHM 會先由 Calibre 解包為 EPUB，再交由行程內引擎解析。需先安裝 Calibre；留空時讀取環境變數 CHM_EBOOK_CONVERT_PATH。',
       language: '語言',
       testConnection: '測試連結',
       docs: '文件',

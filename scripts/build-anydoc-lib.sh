@@ -25,13 +25,16 @@ case "$target" in
   x86_64-apple-darwin) lib_dir=darwin_amd64 ;;
   aarch64-apple-darwin) lib_dir=darwin_arm64 ;;
   x86_64-pc-windows-msvc) lib_dir=windows_amd64 ;;
+  # GNU toolchain: same archive layout cgo looks for on Windows; the MSVC link
+  # flags in anydoc.go accept the .a produced here because cgo drives gcc.
+  x86_64-pc-windows-gnu) lib_dir=windows_amd64 ;;
   x86_64-unknown-linux-gnu) lib_dir=linux_amd64_gnu ;;
   aarch64-unknown-linux-gnu) lib_dir=linux_arm64_gnu ;;
   x86_64-unknown-linux-musl) lib_dir=linux_amd64_musl ;;
   aarch64-unknown-linux-musl) lib_dir=linux_arm64_musl ;;
   *)
     echo "error: unsupported target '$target'." >&2
-    echo "Supported: {x86_64,aarch64}-{apple-darwin,unknown-linux-{gnu,musl}}, x86_64-pc-windows-msvc" >&2
+    echo "Supported: {x86_64,aarch64}-{apple-darwin,unknown-linux-{gnu,musl}}, x86_64-pc-windows-{msvc,gnu}" >&2
     exit 1
     ;;
 esac
