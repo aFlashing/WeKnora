@@ -140,7 +140,11 @@ const fileTypeGroups = computed(() => {
   const officeExts = ['docx', 'doc'].filter(e => ft.has(e))
   const pptExts = ['pptx', 'ppt'].filter(e => ft.has(e))
   const excelExts = ['xlsx', 'xls'].filter(e => ft.has(e))
-  const ebookExts = ['epub', 'chm'].filter(e => ft.has(e))
+  const ebookExts = ['epub'].filter(e => ft.has(e))
+  // CHM is its own group: it always routes to the Calibre-backed engine, while
+  // EPUB is anydoc's. One dropdown cannot serve both, and merging them let a
+  // saved "epub → anydoc" rule capture chm too.
+  const chmExts = ['chm'].filter(e => ft.has(e))
   const webArchiveExts = ['mhtml'].filter(e => ft.has(e))
   const csvExts = ['csv'].filter(e => ft.has(e))
   const mdExts = ['md', 'markdown'].filter(e => ft.has(e))
@@ -155,6 +159,7 @@ const fileTypeGroups = computed(() => {
   if (pptExts.length) groups.push({ key: 'ppt', label: t('kbSettings.parser.fileTypePpt'), icon: 'file-powerpoint', extensions: pptExts })
   if (excelExts.length) groups.push({ key: 'excel', label: t('kbSettings.parser.fileTypeExcel'), icon: 'file-excel', extensions: excelExts })
   if (ebookExts.length) groups.push({ key: 'ebook', label: t('kbSettings.parser.fileTypeEbook'), icon: 'file', extensions: ebookExts })
+  if (chmExts.length) groups.push({ key: 'chm', label: 'CHM', icon: 'file', extensions: chmExts })
   if (webArchiveExts.length) groups.push({ key: 'webarchive', label: t('kbSettings.parser.fileTypeWebArchive'), icon: 'file', extensions: webArchiveExts })
   if (csvExts.length) groups.push({ key: 'csv', label: t('kbSettings.parser.fileTypeCsv'), icon: 'file-excel', extensions: csvExts })
   if (mdExts.length) groups.push({ key: 'markdown', label: 'Markdown', icon: 'file-code', extensions: mdExts })
@@ -266,8 +271,12 @@ function getDefaultEngine(extensions: string[]): string {
 }
 
 function getEngineForGroup(extensions: string[]): string {
+  // A stored rule can name an engine that cannot parse this group's types —
+  // e.g. a rule saved before the group gained a new extension. Ignore it here
+  // so the dropdown neither shows an invalid value nor preserves it on save.
+  const available = new Set(getEngineOptions(extensions).map(option => option.value))
   for (const rule of localEngineRules.value) {
-    if (rule.file_types.some(ft => extensions.includes(ft))) {
+    if (rule.file_types.some(ft => extensions.includes(ft)) && available.has(rule.engine)) {
       return rule.engine
     }
   }

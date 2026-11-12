@@ -2700,7 +2700,7 @@ export default {
         },
         chm: {
           name: 'CHM (Calibre)',
-          desc: 'Справка CHM распаковывается в EPUB с помощью Calibre и разбирается внутри процесса (требуется Calibre)'
+          desc: 'Справка CHM распаковывается в EPUB внутри процесса и разбирается там же (встроенный конвертер, внешние утилиты не нужны)'
         },
         builtin: {
           name: 'Встроенный',
@@ -8056,9 +8056,6 @@ export default {
       parseMethodHint: 'Автоматический режим использует OCR для сканов и извлекает исходный текст из цифровых PDF.',
       sealRecognition: 'Распознавание печатей',
       chartRecognition: 'Распознавание диаграмм',
-      chmConvertPathLabel: 'Путь к Calibre ebook-convert',
-      chmConvertPathPlaceholder: 'D:\\Program Files\\Calibre2\\ebook-convert.exe',
-      chmConvertPathHint: 'Архив CHM сначала распаковывается в EPUB с помощью Calibre, затем разбирается встроенным движком. Требуется установленный Calibre; если поле пустое, используется переменная окружения CHM_EBOOK_CONVERT_PATH.',
       language: 'Язык',
       testConnection: 'Проверить с текущими параметрами',
       docs: 'Документация',
@@ -8964,6 +8961,7 @@ export default {
     operationNotSupportedForType: 'Эта операция не поддерживается для текущего типа базы знаний',
     allFilesSkippedNoEngine: 'Все выбранные файлы были пропущены из-за отсутствия парсера',
     filesSkippedNoEngine: '{count} файл(ов) пропущено из-за отсутствия парсера',
+    filesUnreadable: '{count} файл(ов) не удалось прочитать (0 байт), они пропущены; проверьте, разрешён ли клиенту доступ к этим файлам',
     deleteSuccess: 'Знание удалено!',
     chunkLoadFailed: 'Не удалось загрузить фрагменты',
     infoCard: {

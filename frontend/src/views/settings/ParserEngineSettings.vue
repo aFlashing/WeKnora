@@ -412,20 +412,6 @@
           </div>
         </section>
 
-        <!-- Section 3 — chm 配置（Calibre ebook-convert） -->
-        <section v-if="currentEngine.Name === 'chm'" class="setting-drawer__section">
-          <h4 class="setting-drawer__section-title">{{ $t('settings.parser.configSection', '配置') }}</h4>
-
-          <div class="form-item">
-            <label class="form-label required">{{ t('settings.parser.chmConvertPathLabel') }}</label>
-            <t-input
-              v-model="config.chm_ebook_convert_path"
-              :placeholder="$t('settings.parser.chmConvertPathPlaceholder')"
-              clearable
-            />
-            <p class="form-desc">{{ $t('settings.parser.chmConvertPathHint') }}</p>
-          </div>
-        </section>
       </div>
     </SettingDrawer>
   </div>
@@ -452,7 +438,7 @@ const { t } = useI18n()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
 
-const CONFIGURABLE_ENGINES = new Set(['mineru', 'mineru_cloud', 'paddleocr_vl', 'paddleocr_vl_cloud', 'chm'])
+const CONFIGURABLE_ENGINES = new Set(['mineru', 'mineru_cloud', 'paddleocr_vl', 'paddleocr_vl_cloud'])
 
 /** 各解析引擎的项目/官方文档地址 */
 const ENGINE_DOC_LINKS: Record<string, string> = {
@@ -462,7 +448,6 @@ const ENGINE_DOC_LINKS: Record<string, string> = {
   mineru_cloud: 'https://mineru.net/apiManage/docs',
   paddleocr_vl: 'https://github.com/PaddlePaddle/PaddleOCR',
   paddleocr_vl_cloud: 'https://aistudio.baidu.com/paddleocr',
-  chm: 'https://calibre-ebook.com/download',
 }
 
 /** 解析引擎配置默认值（与 DocReader/Python 侧一致） */
@@ -493,7 +478,6 @@ const DEFAULT_PARSER_CONFIG: ParserEngineConfig = {
   paddleocr_vl_cloud_model: 'PaddleOCR-VL-1.6',
   paddleocr_vl_cloud_use_seal_recognition: true,
   paddleocr_vl_cloud_use_chart_recognition: false,
-  chm_ebook_convert_path: '',
 }
 
 const engines = ref<ParserEngineInfo[]>([])
@@ -637,7 +621,6 @@ async function loadConfig() {
       paddleocr_vl_cloud_model: data?.paddleocr_vl_cloud_model ?? DEFAULT_PARSER_CONFIG.paddleocr_vl_cloud_model ?? 'PaddleOCR-VL-1.6',
       paddleocr_vl_cloud_use_seal_recognition: data?.paddleocr_vl_cloud_use_seal_recognition ?? DEFAULT_PARSER_CONFIG.paddleocr_vl_cloud_use_seal_recognition ?? true,
       paddleocr_vl_cloud_use_chart_recognition: data?.paddleocr_vl_cloud_use_chart_recognition ?? DEFAULT_PARSER_CONFIG.paddleocr_vl_cloud_use_chart_recognition ?? false,
-      chm_ebook_convert_path: data?.chm_ebook_convert_path ?? DEFAULT_PARSER_CONFIG.chm_ebook_convert_path ?? '',
     }
   } catch {
     config.value = { ...DEFAULT_PARSER_CONFIG }
@@ -680,7 +663,6 @@ function buildConfigPayload(): ParserEngineConfig {
     paddleocr_vl_cloud_model: config.value.paddleocr_vl_cloud_model?.trim() ?? '',
     paddleocr_vl_cloud_use_seal_recognition: config.value.paddleocr_vl_cloud_use_seal_recognition,
     paddleocr_vl_cloud_use_chart_recognition: config.value.paddleocr_vl_cloud_use_chart_recognition,
-    chm_ebook_convert_path: config.value.chm_ebook_convert_path?.trim() ?? '',
   }
 }
 

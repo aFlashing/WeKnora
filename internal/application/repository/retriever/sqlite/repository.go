@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -794,6 +795,15 @@ func (r *sqliteRepository) insertVec(db *gorm.DB, rowID uint, dim int, emb []flo
 // deleteRowsAndVecs removes the vec0 and FTS copies of the given rows. Every
 // failure is returned: deleting only the lite_embeddings rows would leave the
 // retrieval indexes holding rows that no longer exist.
+// deleteBatchSize bounds one DELETE statement. SQLite allows 32766 host
+// parameters per statement and, more importantly, every statement here runs
+// inside the caller's single write transaction: a manual with tens of thousands
+// of chunks used to issue two DELETEs per row, holding the database's only write
+// lock for minutes and stalling every other request in the app. Batching keeps
+// the lock time proportional to the number of rows, not the number of round
+// trips.
+const deleteBatchSize = 400
+
 func (r *sqliteRepository) deleteRowsAndVecs(db *gorm.DB, rows []sqliteEmbedding) error {
 	dimIDs := make(map[int][]uint)
 	for _, row := range rows {
@@ -806,21 +816,35 @@ func (r *sqliteRepository) deleteRowsAndVecs(db *gorm.DB, rows []sqliteEmbedding
 			continue
 		}
 		tbl := vecTableName(dim)
-		for _, id := range ids {
-			if err := db.Exec(fmt.Sprintf("DELETE FROM %s WHERE rowid = ?", tbl), id).Error; err != nil {
-				return fmt.Errorf("[SQLite] failed to delete vector row %d from %s: %w", id, tbl, err)
+		for batch := range slices.Chunk(ids, deleteBatchSize) {
+			sqlStr := fmt.Sprintf("DELETE FROM %s WHERE rowid IN (%s)", tbl, placeholders(len(batch)))
+			if err := db.Exec(sqlStr, uintArgs(batch)...).Error; err != nil {
+				return fmt.Errorf("[SQLite] failed to delete vector rows from %s: %w", tbl, err)
 			}
 		}
 	}
 	if r.ftsUnavailable {
 		return nil
 	}
+	rowIDs := make([]uint, 0, len(rows))
 	for _, row := range rows {
-		if err := db.Exec("DELETE FROM lite_embeddings_fts WHERE rowid = ?", row.ID).Error; err != nil {
-			return fmt.Errorf("[SQLite] failed to delete keyword index row %d: %w", row.ID, err)
+		rowIDs = append(rowIDs, row.ID)
+	}
+	for batch := range slices.Chunk(rowIDs, deleteBatchSize) {
+		sqlStr := "DELETE FROM lite_embeddings_fts WHERE rowid IN (" + placeholders(len(batch)) + ")"
+		if err := db.Exec(sqlStr, uintArgs(batch)...).Error; err != nil {
+			return fmt.Errorf("[SQLite] failed to delete keyword index rows: %w", err)
 		}
 	}
 	return nil
+}
+
+func uintArgs(ids []uint) []interface{} {
+	out := make([]interface{}, len(ids))
+	for i, id := range ids {
+		out[i] = id
+	}
+	return out
 }
 
 // copyVec duplicates a vector row for a copied chunk. It reports an error when

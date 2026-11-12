@@ -71,6 +71,13 @@ export function getCurrentLanguage(): string {
 
 instance.interceptors.request.use(
   (config) => {
+    // Resolved per request: the desktop shell injects the loopback API origin
+    // on DomReady, after this module has already cached an empty base.
+    const base = getApiBaseUrl();
+    if (base) {
+      config.baseURL = base;
+    }
+
     const existingAuth = config.headers?.Authorization ?? config.headers?.authorization;
     const isEmbedAuth = typeof existingAuth === 'string' && existingAuth.startsWith('Embed ');
     const isEmbedPath = typeof config.url === 'string' && config.url.includes('/api/v1/embed/');

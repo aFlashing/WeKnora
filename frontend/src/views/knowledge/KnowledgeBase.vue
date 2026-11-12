@@ -1860,6 +1860,15 @@ const enqueueUploads = (
 ) => {
   const targetKbId = kbId.value;
   if (!targetKbId || files.length === 0) return;
+  // A WebView that cannot read the picked files hands back File objects whose
+  // size is 0. Uploading them stores empty documents that all hash to md5("")
+  // and then look like duplicates of each other, so drop them with the reason.
+  const unreadable = files.filter(file => file.size === 0);
+  if (unreadable.length > 0) {
+    MessagePlugin.warning(t('knowledgeBase.filesUnreadable', { count: unreadable.length }));
+    files = files.filter(file => file.size > 0);
+    if (files.length === 0) return;
+  }
   const targetFolder = options.targetFolder || ROOT_FOLDER_PATH;
   uploadTasksStore.enqueue({
     kbId: targetKbId,

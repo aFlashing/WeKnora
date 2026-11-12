@@ -2702,7 +2702,7 @@ export default {
         },
         chm: {
           name: 'CHM (Calibre)',
-          desc: 'CHM 說明文件由 Calibre 解包為 EPUB 後於行程內解析（需安裝 Calibre）'
+          desc: 'CHM 說明文件在行程內解包為 EPUB 後解析（內建轉換器，無需外部程式）'
         },
         builtin: {
           name: '內建',
@@ -8057,9 +8057,6 @@ export default {
       parseMethodHint: '自動模式會為掃描件啟用 OCR，電子版 PDF 直接提取文字。',
       sealRecognition: '印章識別',
       chartRecognition: '圖表識別',
-      chmConvertPathLabel: 'Calibre ebook-convert 路徑',
-      chmConvertPathPlaceholder: 'D:\\Program Files\\Calibre2\\ebook-convert.exe',
-      chmConvertPathHint: 'CHM 會先由 Calibre 解包為 EPUB，再交由行程內引擎解析。需先安裝 Calibre；留空時讀取環境變數 CHM_EBOOK_CONVERT_PATH。',
       language: '語言',
       testConnection: '測試連結',
       docs: '文件',
@@ -8965,6 +8962,7 @@ export default {
     operationNotSupportedForType: '當前知識庫類型不支持該操作',
     allFilesSkippedNoEngine: '所選檔案類型暫無可用解析引擎，已全部跳過',
     filesSkippedNoEngine: '{count} 個檔案因無可用解析引擎被跳過',
+    filesUnreadable: '{count} 個檔案讀取不到內容（0 位元組），已跳過；請確認用戶端是否有權讀取這些檔案',
     deleteSuccess: '已刪除知識',
     chunkLoadFailed: '切塊載入失敗',
     infoCard: {

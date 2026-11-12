@@ -146,8 +146,6 @@ export interface ParserEngineConfig {
   paddleocr_vl_cloud_model?: string
   paddleocr_vl_cloud_use_seal_recognition?: boolean | null
   paddleocr_vl_cloud_use_chart_recognition?: boolean | null
-  // CHM：调用 Calibre 的 ebook-convert 解包成 EPUB 后再解析
-  chm_ebook_convert_path?: string
 }
 
 export interface ParserEnginesResponse {

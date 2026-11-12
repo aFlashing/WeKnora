@@ -357,6 +357,17 @@ func (h *KnowledgeHandler) CreateKnowledgeFromFile(c *gin.Context) {
 		c.Error(errors.NewBadRequestError(fmt.Sprintf("文件大小不能超过%dMB", maxSizeMB)))
 		return
 	}
+	// A zero-byte part means the browser could not read the selected file (an
+	// unreadable path, a stale folder entry, or a dropped directory handle).
+	// Storing it would hash to md5("") and make every later file of the same
+	// type look like a duplicate of this one, so reject it here with the reason
+	// instead of creating a document that is doomed to fail parsing.
+	if file.Size == 0 {
+		logger.Error(ctx, "Uploaded file is empty")
+		c.Error(errors.NewBadRequestError(
+			"文件内容为空（0 字节），客户端没有读到文件内容，请确认文件可访问后重试"))
+		return
+	}
 
 	// Get custom filename if provided (for folder uploads with path)
 	customFileName := c.PostForm("fileName")

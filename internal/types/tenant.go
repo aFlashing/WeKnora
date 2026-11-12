@@ -353,11 +353,6 @@ type ParserEngineConfig struct {
 	PaddleOCRVLCloudModel               string `json:"paddleocr_vl_cloud_model,omitempty"` // e.g. PaddleOCR-VL-1.6
 	PaddleOCRVLCloudUseSealRecognition  *bool  `json:"paddleocr_vl_cloud_use_seal_recognition,omitempty"`
 	PaddleOCRVLCloudUseChartRecognition *bool  `json:"paddleocr_vl_cloud_use_chart_recognition,omitempty"`
-
-	// CHM parsing shells out to Calibre's ebook-convert, which decompresses the
-	// archive into an EPUB the built-in engines can read. Empty falls back to
-	// the CHM_EBOOK_CONVERT_PATH environment variable.
-	CHMEbookConvertPath string `json:"chm_ebook_convert_path,omitempty"`
 }
 
 const (
@@ -493,9 +488,6 @@ func (c *ParserEngineConfig) ToOverridesMap() map[string]string {
 	}
 	if c.PaddleOCRVLCloudUseChartRecognition != nil {
 		m["paddleocr_vl_cloud_use_chart_recognition"] = fmt.Sprintf("%v", *c.PaddleOCRVLCloudUseChartRecognition)
-	}
-	if c.CHMEbookConvertPath != "" {
-		m["chm_ebook_convert_path"] = c.CHMEbookConvertPath
 	}
 	if len(m) == 0 {
 		return nil

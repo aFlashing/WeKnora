@@ -197,6 +197,14 @@ Copy-Item "$dst\third_party\anydoc-go\lib\windows_amd64\libanydoc_go.a" "D:\DevE
 - 桌面版免登录：启动时生成一次性 token，首次自动创建 `admin@weknora.local`。
 - 端口默认随机（`desktop-prefs.json` 中 `http_port=0`）。需要固定端口就修改该文件的 `http_port` 后重启。
 
+### 桌面端 API 必须直连回环地址（否则上传全是 0 字节）
+
+Wails 的 WebView 页面跑在 `http://wails.localhost`，所有相对路径请求都由 WebView 的自定义协议层转交给 `desktopAPIProxy`。这一层**不会把请求体传给 Go 代理**：multipart 的文本字段（`fileName`、`process_config`）能到，**文件部分变成 0 字节**，服务端于是按 `md5("")` 判重，同类型文件全部被误报「知识库中已有相同文件」。
+
+处理方式（已实现）：`frontend/src/utils/api-base.ts` 优先使用 `OnDomReady` 注入的 `window.__WEKNORA_API_BASE__`（`http://127.0.0.1:<port>/api/v1`，只取其中的源），`utils/request.ts` 在请求拦截器里**按请求**解析 baseURL（注入晚于模块加载，不能缓存）。后端 CORS 是 `AllowOrigins: ["*"]` 且 `Authorization` 在白名单里，跨源直连没有问题。
+
+排障特征：`knowledges.file_size = 0` 且 `D:\DevEnv\WeKnoraLiteData\files\*` 里的源文件为 0 字节；`file_hash` 全是 `d41d8cd98f00b204e9800998ecf8427e`（空串 MD5）。
+
 ### 验收与排障
 
 - 正常标志：进程存活、`Get-NetTCPConnection -OwningProcess <PID> -State Listen` 有回环端口、`http://127.0.0.1:<port>/` 返回 200、`/api/v1/*` 返回 401（未带桌面 token，属预期）、**窗口标题为 `WeKnora Lite`**。
@@ -234,26 +242,27 @@ Copy-Item "$dst\third_party\anydoc-go\lib\windows_amd64\libanydoc_go.a" "D:\DevE
 - 新增模型类型时，若它走 `api.Endpoint`，RPM 自动生效；若绕过 Endpoint 直接发 HTTP，需要自行调用 `limiter.GateRPM(ctx, modelID, rpm)`。
 - 单元测试：`go test ./internal/models/limiter/ -run RPM`。
 
-### CHM 文档解析（Calibre + anydoc）
+### CHM 文档解析（内置转换器 + anydoc）
 
-上游没有 CHM 支持。本地新增引擎 `chm`：用 Calibre 的 `ebook-convert` 把 CHM（LZX 压缩的 HTML 容器）解包成 EPUB，再交给进程内 anydoc 解析，全程不依赖 docreader。
+上游没有 CHM 支持。本地新增引擎 `chm`：内置的 `chm2epub` 把 CHM（LZX 压缩的 HTML 容器）解包成 EPUB，再交给进程内 anydoc 解析。**纯 Go，无外部程序、无 cgo、无网络**。
 
 | 项 | 说明 |
 | --- | --- |
-| 代码 | `internal/infrastructure/docparser/chm_reader.go`，`chm_exec_windows.go` / `chm_exec_other.go`（隐藏控制台窗口） |
-| 引擎名 | `chm`，只声明 `chm` 一种文件类型；`defaultParserEngine` 会把 chm 固定路由到它 |
-| 配置项 | 租户级 `chm_ebook_convert_path`（设置 → 解析引擎 → CHM），兜底环境变量 `CHM_EBOOK_CONVERT_PATH` |
-| 超时 | `WEKNORA_CHM_CONVERT_TIMEOUT`，默认 15 分钟；codesys.chm（5.3 MB / 1195 节）实测约 3 分钟 |
-| 临时目录 | 每次转换在系统临时目录建独立目录，`CALIBRE_CONFIG_DIRECTORY` 也指向其中，避免与运行中的 Calibre GUI 抢锁 |
+| 引擎实现 | `internal/infrastructure/docparser/chm_reader.go` |
+| 转换器 | `internal/infrastructure/chm2epub/`（chm / convert / epub / htmlclean / logx / meta / toc），源自独立工具 `chm2epub` v0.1.0，import 路径已改写到本仓库 |
+| 引擎名 | `chm`，只声明 `chm` 一种文件类型；`DefaultParserEngine` 会把 chm 固定路由到它 |
+| 配置项 | **无**。不需要 Calibre，也不再读 `CHM_EBOOK_CONVERT_PATH`；`.env` 里若还有该行可直接删掉 |
+| 临时目录 | 每次转换在系统临时目录建独立目录写入 `.chm` 与 `.epub`，结束后删除 |
+| 性能 | codesys.chm（5.3 MB / 1195 节 / 863 图）实测 **0.4 秒**（Calibre 方案为 3 分钟） |
 | 图片 | EPUB 内嵌图片由 anydoc 抽成 `ImageRef.ImageData`，正文保留 `images/image-N.ext` 相对引用 |
-| 验收 | `WEKNORA_TEST_EBOOK_CONVERT=<ebook-convert> WEKNORA_TEST_CHM_FILE=<x.chm> go test -tags anydoc ./internal/infrastructure/docparser/ -run TestCHMConversionWithCalibre -v` |
+| 验收 | `WEKNORA_TEST_CHM_FILE=<x.chm> go test -tags anydoc ./internal/infrastructure/docparser/ -run TestCHMConversionEndToEnd -v`；转换器自身测试 `go test ./internal/infrastructure/chm2epub/...` |
 
 注意：
 
-- 用户机器上必须装 Calibre；未配置路径时引擎在列表中显示为不可用并给出原因，不会静默失败。
+- 转换器只打包被正文/CSS 引用的资源，未被引用的图片不会进 EPUB；也不做字体子集化与页面切分（一本 CHM 通常是一页 XHTML）。
 - 链路不含 OCR，CHM 内的纯图片页面不会产生文字。
 - 引用定位（SourceBlocks）为空：原文是 `.chm`，前端也没有 CHM 预览器，引用只能定位到文本，不能跳转原文。
-- 换机后除 anydoc 静态库外，还要重新安装 Calibre 并写入 `CHM_EBOOK_CONVERT_PATH`（部署目录的 `.env` 已配置）。
+- 升级转换器：把新版本 `internal/{chm,convert,epub,htmlclean,logx,meta,toc}` 覆盖到 `internal/infrastructure/chm2epub/`，把 `"chm2epub/internal/` 批量替换为 `"github.com/Tencent/WeKnora/internal/infrastructure/chm2epub/`，并同步 `version.go`。
 
 ## 二次开发约定
 

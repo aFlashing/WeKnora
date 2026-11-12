@@ -1302,6 +1302,7 @@ export default {
     operationNotSupportedForType: 'This operation is not supported for the current knowledge base type',
     allFilesSkippedNoEngine: 'All selected files were skipped due to no available parser engine',
     filesSkippedNoEngine: '{count} file(s) skipped due to no available parser engine',
+    filesUnreadable: '{count} file(s) could not be read (0 bytes) and were skipped; check that the client is allowed to read them',
     deleteSuccess: 'Knowledge deleted successfully!',
     chunkLoadFailed: 'Failed to load chunks'
   },
@@ -2400,9 +2401,6 @@ export default {
       parseMethodHint: 'Auto mode uses OCR for scanned PDFs and extracts the native text layer from digital PDFs.',
       sealRecognition: 'Seal Recognition',
       chartRecognition: 'Chart Recognition',
-      chmConvertPathLabel: 'Calibre ebook-convert path',
-      chmConvertPathPlaceholder: 'D:\\Program Files\\Calibre2\\ebook-convert.exe',
-      chmConvertPathHint: 'CHM archives are unpacked into an EPUB with Calibre before parsing. Install Calibre first; leave empty to use the CHM_EBOOK_CONVERT_PATH environment variable.',
       language: 'Language',
       testConnection: 'Test Connection',
       docs: 'Docs',
@@ -7269,7 +7267,7 @@ export default {
         },
         chm: {
           name: 'CHM (Calibre)',
-          desc: 'CHM help archives unpacked to EPUB by Calibre, then parsed in-process (Calibre required)'
+          desc: 'CHM help archives unpacked to EPUB in-process, then parsed (built-in converter, no external tools)'
         },
         mineru: {
           name: 'MinerU',

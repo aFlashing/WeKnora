@@ -2700,7 +2700,7 @@ export default {
         },
         chm: {
           name: 'CHM (Calibre)',
-          desc: 'CHM 도움말을 Calibre로 EPUB으로 변환한 뒤 프로세스 내에서 파싱합니다 (Calibre 필요)'
+          desc: 'CHM 도움말을 프로세스 내에서 EPUB으로 변환한 뒤 파싱합니다 (내장 변환기, 외부 도구 불필요)'
         },
         builtin: {
           name: '내장',
@@ -8056,9 +8056,6 @@ export default {
       parseMethodHint: '자동 모드는 스캔 PDF에는 OCR을 사용하고 디지털 PDF에서는 원본 텍스트를 추출합니다.',
       sealRecognition: '인장 인식',
       chartRecognition: '차트 인식',
-      chmConvertPathLabel: 'Calibre ebook-convert 경로',
-      chmConvertPathPlaceholder: 'D:\\Program Files\\Calibre2\\ebook-convert.exe',
-      chmConvertPathHint: 'CHM은 먼저 Calibre로 EPUB으로 변환된 뒤 프로세스 내 엔진에서 파싱됩니다. Calibre를 먼저 설치해야 합니다. 비워 두면 CHM_EBOOK_CONVERT_PATH 환경 변수를 사용합니다.',
       language: '언어',
       testConnection: '연결 테스트',
       docs: '문서',
@@ -8964,6 +8961,7 @@ export default {
     operationNotSupportedForType: '현재 지식베이스 유형에서는 이 작업을 지원하지 않습니다',
     allFilesSkippedNoEngine: '선택한 모든 파일이 사용 가능한 파싱 엔진이 없어 건너뛰었습니다',
     filesSkippedNoEngine: '{count}개 파일이 사용 가능한 파싱 엔진이 없어 건너뛰었습니다',
+    filesUnreadable: '{count}개 파일을 읽을 수 없어(0바이트) 건너뛰었습니다. 클라이언트가 파일을 읽을 수 있는지 확인하세요',
     deleteSuccess: '지식이 성공적으로 삭제되었습니다!',
     chunkLoadFailed: '청크 로드 실패',
     infoCard: {

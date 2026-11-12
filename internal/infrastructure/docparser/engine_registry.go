@@ -3,7 +3,9 @@ package docparser
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/Tencent/WeKnora/internal/logger"
 	"github.com/Tencent/WeKnora/internal/types"
 	"github.com/Tencent/WeKnora/internal/types/interfaces"
 )
@@ -66,16 +68,51 @@ func lookupEngine(name string) (EngineRegistration, bool) {
 // in Go and everything else goes to the docreader service. An unknown name is
 // routed to the docreader too, so engines that only exist in the Python
 // service keep working without a Go-side registration.
+//
+// A stored parser rule can name an engine that does not parse this type — the
+// rule was saved before the type joined a UI group, or a type was added to the
+// group afterwards. When the type-level default names an engine that does
+// declare it, that engine wins and the substitution is logged; anything else
+// keeps the old behavior so an explicitly chosen engine is still honored.
 func NewReader(
 	ctx context.Context, engine, fileType string, isURL bool, deps ReaderDeps,
 ) (interfaces.DocReader, error) {
 	if registration, ok := lookupEngine(engine); ok {
+		if engineDeclaresFileType(registration, fileType, deps.Remote != nil) {
+			return registration.NewReader(ctx, deps)
+		}
+		fallback := types.DefaultParserEngine(fileType)
+		if replaced, ok := lookupEngine(fallback); ok && fallback != engine &&
+			engineDeclaresFileType(replaced, fileType, deps.Remote != nil) {
+			logger.Warnf(ctx, "[parser] engine %q does not parse %q; using %q instead",
+				engine, fileType, fallback)
+			return replaced.NewReader(ctx, deps)
+		}
 		return registration.NewReader(ctx, deps)
 	}
 	if engine == "" && !isURL && IsSimpleFormat(fileType) {
 		return &SimpleFormatReader{}, nil
 	}
 	return remoteReader(deps)
+}
+
+// engineDeclaresFileType reports whether a registered engine lists this file
+// type. Engines that declare no types are never filtered out.
+func engineDeclaresFileType(engine EngineRegistration, fileType string, docreaderConnected bool) bool {
+	target := strings.ToLower(strings.TrimPrefix(strings.TrimSpace(fileType), "."))
+	if target == "" {
+		return true
+	}
+	declared := engine.FileTypes(docreaderConnected)
+	if len(declared) == 0 {
+		return true
+	}
+	for _, ft := range declared {
+		if strings.ToLower(strings.TrimPrefix(strings.TrimSpace(ft), ".")) == target {
+			return true
+		}
+	}
+	return false
 }
 
 // remoteReader returns the docreader client, or an error when the service is

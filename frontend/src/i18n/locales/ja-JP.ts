@@ -1302,6 +1302,7 @@ export default {
     operationNotSupportedForType: 'この操作は現在のナレッジベースのタイプでは利用できません',
     allFilesSkippedNoEngine: '利用可能な解析エンジンがないため、選択したすべてのファイルをスキップしました',
     filesSkippedNoEngine: '利用可能な解析エンジンがないため、{count}件のファイルをスキップしました',
+    filesUnreadable: '{count}件のファイルを読み取れなかったため（0 バイト）スキップしました。クライアントがファイルを読み取れるか確認してください',
     deleteSuccess: 'ナレッジを削除しました。',
     chunkLoadFailed: 'チャンクの読み込みに失敗しました'
   },
@@ -2400,9 +2401,6 @@ export default {
       parseMethodHint: '自動モードでは、スキャンされたPDFにはOCRを使用し、デジタルPDFからはネイティブのテキストレイヤを抽出します。',
       sealRecognition: '印影認識',
       chartRecognition: 'グラフ認識',
-      chmConvertPathLabel: 'Calibre ebook-convert のパス',
-      chmConvertPathPlaceholder: 'D:\\Program Files\\Calibre2\\ebook-convert.exe',
-      chmConvertPathHint: 'CHM はまず Calibre で EPUB に展開され、その後プロセス内エンジンで解析されます。Calibre のインストールが必要です。空欄の場合は環境変数 CHM_EBOOK_CONVERT_PATH を使用します。',
       language: '言語',
       testConnection: '接続テスト',
       docs: 'ドキュメント',
@@ -7269,7 +7267,7 @@ export default {
         },
         chm: {
           name: 'CHM (Calibre)',
-          desc: 'CHM ヘルプを Calibre で EPUB に展開し、プロセス内で解析します（Calibre が必要）'
+          desc: 'CHM ヘルプをプロセス内で EPUB に展開して解析します（内蔵コンバーター、外部ツール不要）'
         },
         mineru: {
           name: 'MinerU',
