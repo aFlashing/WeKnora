@@ -2702,6 +2702,10 @@ export default {
           name: 'CHM (Calibre)',
           desc: 'Справка CHM распаковывается в EPUB внутри процесса и разбирается там же (встроенный конвертер, внешние утилиты не нужны)'
         },
+        docling: {
+          name: 'Docling',
+          desc: 'Разбор вёрстки IBM Docling: таблицы, формулы, порядок чтения (локальный docling-serve)'
+        },
         builtin: {
           name: 'Встроенный',
           desc: 'Встроенный парсер DocReader (docx/pdf/xlsx и другие сложные форматы)'
@@ -8056,6 +8060,10 @@ export default {
       parseMethodHint: 'Автоматический режим использует OCR для сканов и извлекает исходный текст из цифровых PDF.',
       sealRecognition: 'Распознавание печатей',
       chartRecognition: 'Распознавание диаграмм',
+      doclingEndpointLabel: 'Адрес docling-serve',
+      doclingEndpointPlaceholder: 'http://127.0.0.1:5001',
+      doclingEndpointHint: 'Сначала запустите docling-serve локально, затем укажите его адрес. В режиме CPU обработка занимает 1–3 с на страницу; движок рассчитан на PDF, где важны вёрстка, таблицы и формулы.',
+      doclingApiKeyPlaceholder: 'Только если docling-serve запущен с API-ключом',
       language: 'Язык',
       testConnection: 'Проверить с текущими параметрами',
       docs: 'Документация',

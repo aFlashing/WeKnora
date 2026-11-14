@@ -15,7 +15,16 @@ import (
 	"github.com/Tencent/WeKnora/internal/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
+)
+
+const (
+	// docreaderHealthProbeInterval keeps IsConnected cheap: it runs on every
+	// parse (anydoc fallback decisions) and on every engine-list refresh, so
+	// the health RPC result is cached for this long.
+	docreaderHealthProbeInterval = 10 * time.Second
+	docreaderHealthProbeTimeout  = 1500 * time.Millisecond
 )
 
 // Match the HTTP upload envelope allowance: legal file bytes still need room
@@ -41,6 +50,15 @@ type GRPCDocumentReader struct {
 	conn   *grpc.ClientConn
 	client proto.DocReaderClient
 	addr   string
+
+	// Cached health probe. gRPC dials lazily, so a non-nil conn says nothing
+	// about whether the service is listening: without this the engine list
+	// advertised "builtin: available" while every parse failed with
+	// DOCREADER_UNAVAILABLE.
+	healthMu   sync.Mutex
+	healthAt   time.Time
+	healthAddr string
+	healthOK   bool
 }
 
 func NewGRPCDocumentReader(addr string) (*GRPCDocumentReader, error) {
@@ -95,10 +113,31 @@ func (p *GRPCDocumentReader) Reconnect(addr string) error {
 	return p.connect(addr)
 }
 
+// IsConnected reports whether the docreader actually answers, not merely
+// whether a lazily dialed connection object exists.
 func (p *GRPCDocumentReader) IsConnected() bool {
 	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.conn != nil
+	conn, addr := p.conn, p.addr
+	p.mu.RUnlock()
+	if conn == nil {
+		return false
+	}
+
+	p.healthMu.Lock()
+	defer p.healthMu.Unlock()
+	if p.healthAddr == addr && time.Since(p.healthAt) < docreaderHealthProbeInterval {
+		return p.healthOK
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), docreaderHealthProbeTimeout)
+	defer cancel()
+	resp, err := grpc_health_v1.NewHealthClient(conn).Check(ctx, &grpc_health_v1.HealthCheckRequest{})
+	p.healthAt, p.healthAddr = time.Now(), addr
+	p.healthOK = err == nil && resp.GetStatus() == grpc_health_v1.HealthCheckResponse_SERVING
+	if !p.healthOK && err != nil {
+		logger.Warnf(context.Background(), "[docreader] health probe failed (%s): %v", addr, err)
+	}
+	return p.healthOK
 }
 
 // GetVersionInfo queries the running docreader rather than assuming its image

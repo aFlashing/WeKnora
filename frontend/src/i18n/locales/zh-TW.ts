@@ -2704,6 +2704,10 @@ export default {
           name: 'CHM (Calibre)',
           desc: 'CHM 說明文件在行程內解包為 EPUB 後解析（內建轉換器，無需外部程式）'
         },
+        docling: {
+          name: 'Docling',
+          desc: 'IBM Docling 版面解析：表格、公式、閱讀順序（本機 docling-serve）'
+        },
         builtin: {
           name: '內建',
           desc: 'DocReader 內建解析引擎（docx/pdf/xlsx 等複雜格式）'
@@ -8057,6 +8061,10 @@ export default {
       parseMethodHint: '自動模式會為掃描件啟用 OCR，電子版 PDF 直接提取文字。',
       sealRecognition: '印章識別',
       chartRecognition: '圖表識別',
+      doclingEndpointLabel: 'docling-serve 位址',
+      doclingEndpointPlaceholder: 'http://127.0.0.1:5001',
+      doclingEndpointHint: '先在本機啟動 docling-serve，再填入它的位址。CPU 模式約 1~3 秒/頁，適合需要版面、表格與公式的 PDF。',
+      doclingApiKeyPlaceholder: 'docling-serve 啟用 API Key 時填寫（選填）',
       language: '語言',
       testConnection: '測試連結',
       docs: '文件',

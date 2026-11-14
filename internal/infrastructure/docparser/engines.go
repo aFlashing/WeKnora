@@ -41,6 +41,7 @@ func init() {
 	RegisterEngine(&mineruCloudEngine{})
 	RegisterEngine(&paddleOCRVLEngine{})
 	RegisterEngine(&paddleOCRVLCloudEngine{})
+	RegisterEngine(&doclingEngine{})
 }
 
 // preferAnydocWhenAvailable is the type-level default override: when the

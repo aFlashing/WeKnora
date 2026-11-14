@@ -146,6 +146,9 @@ export interface ParserEngineConfig {
   paddleocr_vl_cloud_model?: string
   paddleocr_vl_cloud_use_seal_recognition?: boolean | null
   paddleocr_vl_cloud_use_chart_recognition?: boolean | null
+  // Docling：本地 docling-serve（HTTP），可选 API Key
+  docling_endpoint?: string
+  docling_api_key?: string
 }
 
 export interface ParserEnginesResponse {

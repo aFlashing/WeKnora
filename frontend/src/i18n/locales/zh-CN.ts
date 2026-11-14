@@ -2704,6 +2704,10 @@ export default {
           name: 'CHM (Calibre)',
           desc: 'CHM 帮助文档在进程内解包为 EPUB 后解析（内置转换器，无需外部程序）'
         },
+        docling: {
+          name: 'Docling',
+          desc: 'IBM Docling 版面解析：表格、公式、阅读顺序（本地 docling-serve）'
+        },
         builtin: {
           name: '内置',
           desc: 'DocReader 内置解析引擎（docx/pdf/xlsx 等复杂格式）'
@@ -8057,6 +8061,10 @@ export default {
       parseMethodHint: '自动模式会为扫描件启用 OCR，电子版 PDF 直接提取文本。',
       sealRecognition: '印章识别',
       chartRecognition: '图表识别',
+      doclingEndpointLabel: 'docling-serve 地址',
+      doclingEndpointPlaceholder: 'http://127.0.0.1:5001',
+      doclingEndpointHint: '先在本机启动 docling-serve，再填入它的地址。CPU 模式约 1~3 秒/页，适合需要版面、表格与公式的 PDF。',
+      doclingApiKeyPlaceholder: 'docling-serve 启用 API Key 时填写（可选）',
       language: '语言',
       testConnection: '测试连接',
       docs: '文档',

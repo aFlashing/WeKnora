@@ -336,6 +336,12 @@ type ParserEngineConfig struct {
 	MinerUCloudEnableOCR     *bool  `json:"mineru_cloud_enable_ocr,omitempty"`
 	MinerUCloudLanguage      string `json:"mineru_cloud_language,omitempty"`
 
+	// Docling (IBM, MIT) runs as a local docling-serve; it gives PDFs reading
+	// order, table structure, formulas and page provenance. Empty endpoint
+	// means the engine stays unavailable.
+	DoclingEndpoint string `json:"docling_endpoint,omitempty"`
+	DoclingAPIKey   string `json:"docling_api_key,omitempty"` // docling-serve API key, when it is started with one
+
 	// OpenDataLoader PDF (docreader engine); hybrid requires opendataloader-pdf-hybrid service.
 	ODLHybrid           string `json:"odl_hybrid,omitempty"`      // off (default), docling-fast, hancom-ai
 	ODLHybridURL        string `json:"odl_hybrid_url,omitempty"`  // e.g. http://odl-hybrid:5002
@@ -407,6 +413,12 @@ func (c *ParserEngineConfig) ToOverridesMap() map[string]string {
 	}
 	if c.MinerUAPIKey != "" {
 		m["mineru_api_key"] = c.MinerUAPIKey
+	}
+	if c.DoclingEndpoint != "" {
+		m["docling_endpoint"] = c.DoclingEndpoint
+	}
+	if c.DoclingAPIKey != "" {
+		m["docling_api_key"] = c.DoclingAPIKey
 	}
 	if c.MinerUServerAPIKey != "" {
 		m["mineru_server_api_key"] = c.MinerUServerAPIKey

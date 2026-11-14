@@ -412,6 +412,33 @@
           </div>
         </section>
 
+        <!-- Docling：本地 docling-serve（版面/表格/公式） -->
+        <section v-if="currentEngine.Name === 'docling'" class="setting-drawer__section">
+          <h4 class="setting-drawer__section-title">{{ $t('settings.parser.configSection', '配置') }}</h4>
+
+          <div class="form-item">
+            <label class="form-label required">{{ t('settings.parser.doclingEndpointLabel') }}</label>
+            <t-input
+              v-model="config.docling_endpoint"
+              :placeholder="$t('settings.parser.doclingEndpointPlaceholder')"
+              clearable
+            />
+            <p class="form-desc">{{ $t('settings.parser.doclingEndpointHint') }}</p>
+          </div>
+
+          <div class="form-item">
+            <label class="form-label">API Key</label>
+            <t-input
+              v-model="config.docling_api_key"
+              type="password"
+              :placeholder="$t('settings.parser.doclingApiKeyPlaceholder')"
+              clearable
+            >
+              <template #prefix-icon><t-icon name="lock-on" /></template>
+            </t-input>
+          </div>
+        </section>
+
       </div>
     </SettingDrawer>
   </div>
@@ -438,7 +465,7 @@ const { t } = useI18n()
 const uiStore = useUIStore()
 const authStore = useAuthStore()
 
-const CONFIGURABLE_ENGINES = new Set(['mineru', 'mineru_cloud', 'paddleocr_vl', 'paddleocr_vl_cloud'])
+const CONFIGURABLE_ENGINES = new Set(['mineru', 'mineru_cloud', 'paddleocr_vl', 'paddleocr_vl_cloud', 'docling'])
 
 /** 各解析引擎的项目/官方文档地址 */
 const ENGINE_DOC_LINKS: Record<string, string> = {
@@ -448,6 +475,7 @@ const ENGINE_DOC_LINKS: Record<string, string> = {
   mineru_cloud: 'https://mineru.net/apiManage/docs',
   paddleocr_vl: 'https://github.com/PaddlePaddle/PaddleOCR',
   paddleocr_vl_cloud: 'https://aistudio.baidu.com/paddleocr',
+  docling: 'https://github.com/docling-project/docling',
 }
 
 /** 解析引擎配置默认值（与 DocReader/Python 侧一致） */
@@ -478,6 +506,9 @@ const DEFAULT_PARSER_CONFIG: ParserEngineConfig = {
   paddleocr_vl_cloud_model: 'PaddleOCR-VL-1.6',
   paddleocr_vl_cloud_use_seal_recognition: true,
   paddleocr_vl_cloud_use_chart_recognition: false,
+  // Docling 走本机 docling-serve；地址与 API Key 都由用户填写
+  docling_endpoint: '',
+  docling_api_key: '',
 }
 
 const engines = ref<ParserEngineInfo[]>([])
@@ -526,6 +557,7 @@ const ENGINE_ORDER: Record<string, number> = {
   paddleocr_vl: 7,
   paddleocr_vl_cloud: 8,
   chm: 9,
+  docling: 10,
 }
 
 const sortedEngines = computed(() => {
@@ -621,6 +653,8 @@ async function loadConfig() {
       paddleocr_vl_cloud_model: data?.paddleocr_vl_cloud_model ?? DEFAULT_PARSER_CONFIG.paddleocr_vl_cloud_model ?? 'PaddleOCR-VL-1.6',
       paddleocr_vl_cloud_use_seal_recognition: data?.paddleocr_vl_cloud_use_seal_recognition ?? DEFAULT_PARSER_CONFIG.paddleocr_vl_cloud_use_seal_recognition ?? true,
       paddleocr_vl_cloud_use_chart_recognition: data?.paddleocr_vl_cloud_use_chart_recognition ?? DEFAULT_PARSER_CONFIG.paddleocr_vl_cloud_use_chart_recognition ?? false,
+      docling_endpoint: data?.docling_endpoint ?? DEFAULT_PARSER_CONFIG.docling_endpoint ?? '',
+      docling_api_key: data?.docling_api_key ?? DEFAULT_PARSER_CONFIG.docling_api_key ?? '',
     }
   } catch {
     config.value = { ...DEFAULT_PARSER_CONFIG }
@@ -663,12 +697,15 @@ function buildConfigPayload(): ParserEngineConfig {
     paddleocr_vl_cloud_model: config.value.paddleocr_vl_cloud_model?.trim() ?? '',
     paddleocr_vl_cloud_use_seal_recognition: config.value.paddleocr_vl_cloud_use_seal_recognition,
     paddleocr_vl_cloud_use_chart_recognition: config.value.paddleocr_vl_cloud_use_chart_recognition,
+    docling_endpoint: config.value.docling_endpoint?.trim() ?? '',
+    docling_api_key: config.value.docling_api_key?.trim() ?? '',
   }
 }
 
 async function onCheck() {
-  // CHM is validated against a local executable, not against the docreader link.
-  if (!connected && currentEngine.value?.Name !== 'chm') {
+  // CHM and Docling validate a local service, not the docreader link.
+  const localEngine = currentEngine.value?.Name === 'chm' || currentEngine.value?.Name === 'docling'
+  if (!connected && !localEngine) {
     checkMessage.value = t('settings.parser.ensureDocreaderConnected')
     return
   }

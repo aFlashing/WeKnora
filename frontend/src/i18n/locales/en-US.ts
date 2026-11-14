@@ -2401,6 +2401,10 @@ export default {
       parseMethodHint: 'Auto mode uses OCR for scanned PDFs and extracts the native text layer from digital PDFs.',
       sealRecognition: 'Seal Recognition',
       chartRecognition: 'Chart Recognition',
+      doclingEndpointLabel: 'docling-serve address',
+      doclingEndpointPlaceholder: 'http://127.0.0.1:5001',
+      doclingEndpointHint: 'Start docling-serve locally first, then enter its address. CPU mode takes 1-3 seconds per page and is meant for PDFs whose layout, tables and formulas matter.',
+      doclingApiKeyPlaceholder: 'Only when docling-serve is started with an API key',
       language: 'Language',
       testConnection: 'Test Connection',
       docs: 'Docs',
@@ -7268,6 +7272,10 @@ export default {
         chm: {
           name: 'CHM (Calibre)',
           desc: 'CHM help archives unpacked to EPUB in-process, then parsed (built-in converter, no external tools)'
+        },
+        docling: {
+          name: 'Docling',
+          desc: 'IBM Docling layout parsing: tables, formulas, reading order (local docling-serve)'
         },
         mineru: {
           name: 'MinerU',

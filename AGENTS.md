@@ -265,6 +265,38 @@ Wails 的 WebView 页面跑在 `http://wails.localhost`，所有相对路径请�
 - 引用定位（SourceBlocks）为空：原文是 `.chm`，前端也没有 CHM 预览器，引用只能定位到文本，不能跳转原文。
 - 升级转换器：把新版本 `internal/{chm,convert,epub,htmlclean,logx,meta,toc}` 覆盖到 `internal/infrastructure/chm2epub/`，把 `"chm2epub/internal/` 批量替换为 `"github.com/Tencent/WeKnora/internal/infrastructure/chm2epub/`，并同步 `version.go`。
 
+### Docling 本地版面解析（docling-serve）
+
+Docling（IBM，MIT）补的是 PDF 短板：版面、阅读顺序、表格结构（TableFormer）、公式、页码坐标。它是 Python + PyTorch 服务，所以**独立部署**、通过 HTTP 调用，不编进 exe。
+
+| 项 | 说明 |
+| --- | --- |
+| 安装位置 | `D:\DevEnv\docling`：`venv`（Python 3.12，docling 2.150.0 + docling-serve 1.38.2）、`hf\hub`（模型缓存，约 1.3 GB）、`logs`、`start-serve.vbs` |
+| 系统变量 | `HF_HOME=D:\DevEnv\docling\hf`、`PYTHONUTF8=1`、`PYTHONIOENCODING=utf-8`，PATH 追加 `D:\DevEnv\docling\venv\Scripts` |
+| 自启 | 计划任务 `WeKnora Docling Serve`：登录时用 `wscript start-serve.vbs` 隐藏窗口启动，监听 `127.0.0.1:5001` |
+| 地址来源 | 引擎优先读租户配置 `docling_endpoint`，为空时回落 `.env` 的 `DOCLING_ENDPOINT` |
+| SSRF | `.env` 必须保留 `SSRF_WHITELIST=127.0.0.1,::1`，否则 Go 侧客户端连不上回环服务 |
+| 引擎 | `docling`，只声明 `pdf/jpg/jpeg/png/bmp/tiff/webp`；Office 仍归 anydoc（快且准） |
+| 图片 | 请求 `image_export_mode=embedded`，正文里的 `data:image/...` 由管线 `ImageResolver` 落盘并改写 |
+| 调用方式 | **必须用异步接口**：`POST /v1/convert/file/async` → 轮询 `/v1/status/poll/{id}` → `GET /v1/result/{id}`。同步接口在 `DOCLING_SERVE_MAX_SYNC_WAIT`（默认 120s）后返回 504，而服务端**不会取消**转换，重试只会继续堆队列 |
+
+其他项目复用（不需要重复安装）：
+
+```powershell
+# HTTP（推荐，服务常驻）
+curl -X POST http://127.0.0.1:5001/v1/convert/file -F "files=@a.pdf" -F "to_formats=md"
+# 命令行（一次性）
+& D:\DevEnv\docling\venv\Scripts\docling.exe convert a.pdf --to md --output out
+```
+
+注意：
+
+- **别删** `venv` 和 `hf\hub`：模型在里面，重下要几分钟。
+- 首次转换会下载模型；CPU 约 1~3 秒/页，100 页 PDF 约 5 分钟。实测：`CODESYS Installation and Start.pdf`（0.27 MB）35 秒，`InoProShopReleaseNote.pdf`（1.34 MB）84 秒。
+- 队列积压会让小文件也超时：同步模式下排在 50 个任务后面必然 504。排查时先看一眼 `task_position`，必要时重启 docling-serve 清队列。
+- 启动报 `UnicodeEncodeError: 'gbk' codec ...` 是控制台编码问题，`PYTHONUTF8=1` 必须设置（已写进系统变量）。
+- 升级：`D:\DevEnv\docling\venv\Scripts\python.exe -m pip install -U docling docling-serve`，然后重启计划任务。
+
 ## 二次开发约定
 
 - 新增依赖或修改构建配置时，同步更新对应的锁文件（`go.mod`/`go.sum`、前端 `package.json` 锁文件），避免与上游合并时产生大规模冲突。

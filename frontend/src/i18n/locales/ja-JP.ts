@@ -2401,6 +2401,10 @@ export default {
       parseMethodHint: '自動モードでは、スキャンされたPDFにはOCRを使用し、デジタルPDFからはネイティブのテキストレイヤを抽出します。',
       sealRecognition: '印影認識',
       chartRecognition: 'グラフ認識',
+      doclingEndpointLabel: 'docling-serve のアドレス',
+      doclingEndpointPlaceholder: 'http://127.0.0.1:5001',
+      doclingEndpointHint: 'まずローカルで docling-serve を起動し、そのアドレスを入力してください。CPU モードでは 1 ページあたり約 1〜3 秒かかり、レイアウト・表・数式が重要な PDF に適しています。',
+      doclingApiKeyPlaceholder: 'docling-serve を API Key 付きで起動した場合のみ入力',
       language: '言語',
       testConnection: '接続テスト',
       docs: 'ドキュメント',
@@ -7268,6 +7272,10 @@ export default {
         chm: {
           name: 'CHM (Calibre)',
           desc: 'CHM ヘルプをプロセス内で EPUB に展開して解析します（内蔵コンバーター、外部ツール不要）'
+        },
+        docling: {
+          name: 'Docling',
+          desc: 'IBM Docling によるレイアウト解析：表・数式・読み順（ローカル docling-serve）'
         },
         mineru: {
           name: 'MinerU',

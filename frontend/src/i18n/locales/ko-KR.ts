@@ -2702,6 +2702,10 @@ export default {
           name: 'CHM (Calibre)',
           desc: 'CHM 도움말을 프로세스 내에서 EPUB으로 변환한 뒤 파싱합니다 (내장 변환기, 외부 도구 불필요)'
         },
+        docling: {
+          name: 'Docling',
+          desc: 'IBM Docling 레이아웃 파싱: 표, 수식, 읽기 순서 (로컬 docling-serve)'
+        },
         builtin: {
           name: '내장',
           desc: 'DocReader 내장 파서 엔진 (docx/pdf/xlsx 등 복잡한 형식)'
@@ -8056,6 +8060,10 @@ export default {
       parseMethodHint: '자동 모드는 스캔 PDF에는 OCR을 사용하고 디지털 PDF에서는 원본 텍스트를 추출합니다.',
       sealRecognition: '인장 인식',
       chartRecognition: '차트 인식',
+      doclingEndpointLabel: 'docling-serve 주소',
+      doclingEndpointPlaceholder: 'http://127.0.0.1:5001',
+      doclingEndpointHint: '먼저 로컬에서 docling-serve를 실행한 뒤 주소를 입력하세요. CPU 모드에서는 페이지당 약 1~3초가 걸리며, 레이아웃·표·수식이 중요한 PDF에 적합합니다.',
+      doclingApiKeyPlaceholder: 'docling-serve를 API Key와 함께 실행한 경우에만 입력',
       language: '언어',
       testConnection: '연결 테스트',
       docs: '문서',
